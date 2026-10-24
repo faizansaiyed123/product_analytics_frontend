@@ -105,7 +105,7 @@ jobs:
       - name: Start the real FastAPI backend
         working-directory: backend
         run: |
-          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/product-analytics-backend.log 2>&1 &
+          nohup python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/product-analytics-backend.log 2>&1 &
           for i in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:8000/health > /dev/null; then
               echo "Backend liveness endpoint is ready"
@@ -177,7 +177,7 @@ jobs:
       - name: Verify production frontend container and public SDK paths
         run: |
           docker build --tag product-analytics-frontend:e2e .
-          docker run --detach --rm --name product-analytics-frontend-e2e -p 127.0.0.1:8080:80 product-analytics-frontend:e2e
+          docker run --detach --rm --name product-analytics-frontend-e2e --add-host=backend:host-gateway -p 127.0.0.1:8080:80 product-analytics-frontend:e2e
           trap 'docker stop product-analytics-frontend-e2e >/dev/null 2>&1 || true' EXIT
           for url in /login /sdk/analytics.min.js /sdk/analytics.esm.js; do
             curl --fail --silent --show-error "http://127.0.0.1:8080$url" -o /tmp/response-body
