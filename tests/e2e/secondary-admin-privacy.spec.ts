@@ -166,7 +166,7 @@ test("event details, erasure, key rotation, alerts and team invites", async ({ p
   await notificationButton.click();
   await expect(page.getByText("Alert: " + alertName, { exact: true })).toBeVisible();
   await saveShot(page, "32-alert-notification.png");
-  const markReadWait = page.waitForResponse(r => r.url().endsWith("/api/v1/notifications/read") && r.request().method() === "POST");
+  const markReadWait = page.waitForResponse(r => new URL(r.url()).pathname.endsWith("/api/v1/notifications/read") && r.request().method() === "POST");
   await page.getByRole("menuitem", { name: "Mark all as read" }).click();
   expect((await markReadWait).status()).toBe(200);
   await expect(page.getByRole("button", { name: "Notifications", exact: true })).toBeVisible();
