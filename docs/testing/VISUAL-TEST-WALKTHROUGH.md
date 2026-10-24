@@ -26,7 +26,7 @@ The application has two different authentication paths. Product events use a pro
 
 This walkthrough is backed by the full-stack validation workflow defined at `.github/workflows/full-stack-e2e.yml`. The browser tests create a disposable test account and project, send test events through the real HTTP ingestion endpoint, exercise the saved-analytics forms in the real frontend, and verify records directly against PostgreSQL. These test records are isolated CI data—not production or customer data.
 
-**Evidence rule:** a screenshot is captured by Playwright from the running application. A workflow run must pass before these images are treated as a verified walkthrough. UI unit tests that use Mock Service Worker are regression tests, not proof of end-to-end persistence.
+**Evidence rule:** screenshots are captured by Playwright from the running application. The latest full-stack run passed the backend suite, frontend tests, lint/typecheck/build, browser journey, direct SQL assertions and container/SDK smoke test. UI unit tests use Mock Service Worker by design and are regression tests, not proof of persistence; the browser/API/SQL journey is the end-to-end evidence.
 
 ## 1. Sign in and create a workspace
 
@@ -168,34 +168,203 @@ Security settings cover session and password management. The negative-login chec
 
 ![Invalid credentials are handled by the actual API](visuals/22-invalid-login.png)
 
+![Password change completed](visuals/23-security-password-changed.png)
+
+The password-change flow was exercised through Settings with a disposable CI account. The backend retained the current session and revoked other sessions; the browser then signed out before testing anonymous authentication pages.
+
+![Forgot-password request](visuals/24-forgot-password.png)
+
+The request returns the same public success message whether or not an account exists; backend tests verify that the response does not disclose account existence.
+
+![Reset-password form](visuals/25-reset-password.png)
+
+![Invalid reset token error](visuals/26-reset-password-invalid-token.png)
+
+The browser blocks a weak candidate password. A strong candidate with a deliberately invalid token is submitted to the real API, which rejects the token.
+
+![Invalid email-verification token](visuals/27-verify-email-invalid-token.png)
+
+The verification page calls the real token-confirmation endpoint and displays the backend's invalid-token response.
+
+![Old password rejected after the password change](visuals/28-old-password-rejected.png)
+
+After signing out, the previous credential is rejected and the new credential successfully starts a fresh session.
+
 ## 7. API and database evidence checklist
 
-| Area | Evidence required | Current automated check |
+| Area | Evidence required | Verified automated coverage |
 |---|---|---|
-| Registration and login | Real HTTP status, cookies/session, invalid credentials rejected | Browser test plus backend auth tests |
-| Project creation and API key | Project row exists; secret is not stored in plaintext | Browser response plus PostgreSQL assertion |
-| Event ingestion | API key authentication, accepted count, events/persons/definitions in DB | Browser POST plus direct SQL assertions |
-| Analytics query | Frontend POST, non-5xx response and rendered result | Browser network assertion; backend analytics suite |
-| Reports | UI create response and matching database row | Browser test plus direct SQL assertion |
-| Cohorts | UI create response and matching database row | Browser test plus direct SQL assertion |
-| Dashboards | Create, widget-layout PATCH and matching database row | Browser test plus direct SQL assertion |
-| Alerts | UI create response and matching database row | Browser test plus direct SQL assertion |
-| Page coverage | Screenshots from every registered workspace route | Browser route sweep |
-| Build and static quality | Frontend tests, lint, TypeScript, production build and Docker image build | CI workflow |
-| Database migrations and backend regressions | Alembic upgrade against PostgreSQL, all backend tests against PostgreSQL/Redis | CI workflow |
+| Registration, login and logout | Live status, session cookies, invalid credentials rejected, logout and new-session login | Browser E2E plus backend auth/session/CSRF/rate-limit tests |
+| Password change and recovery | Current password validation, other-session revocation, reset request, invalid reset token and invalid email-verification token | Browser E2E plus backend auth tests |
+| Project and settings | Project creation/rename, retention setting and setting persistence | Browser UI/API actions plus direct PostgreSQL assertions |
+| API keys | Create, one-time plaintext reveal, revoke, stored hash and permissions | Browser UI/API actions plus SQL assertions; backend rotation/grace/permission tests |
+| Event ingestion | API-key authentication, four accepted events and persisted event/person/definition rows | Browser POST plus direct SQL assertions; backend ingestion suite |
+| Overview freshness | Forced refresh after ingestion renders four stored events | Browser assertion against the real overview endpoint; refresh action added for stale cached results |
+| Trends, funnels, retention and journeys | Structured query inputs and analytics results | Browser route/network checks plus database-backed analytics tests |
+| Events, users and sessions | Explorer list/detail/timeline and session calculations | Browser route sweep plus backend explorer/session tests |
+| Cohorts | Preview count, create and persisted definition | Browser preview/create plus direct SQL assertion; backend criteria/filter tests |
+| Reports | Save from a real analytics query and persist the report | Browser request plus SQL assertion; backend CRUD/duplicate/ownership tests |
+| Dashboards | Create, add saved-report widget and persist layout PATCH | Browser requests plus SQL assertion; backend layout validation tests |
+| Alerts and notifications | Create, evaluate and store alert; notification state/logic | Browser create/evaluate plus SQL assertion; backend evaluation/notification/webhook tests |
+| Export | Direct CSV download and queued worker export/download | Browser download events plus SQL assertion for completed export job; backend format/job tests |
+| Destructive/data-management actions | Retention save, purge confirmation guard, person erasure | Browser setting save and negative confirmation guard; backend test verifies person and event rows are deleted |
+| Operational endpoints | Liveness, readiness and metrics | Backend API suite against migrated PostgreSQL/Redis |
+| Page coverage | Captured screenshots from workspace, settings, login and recovery pages | Playwright screenshots from the running application in the latest green run |
+| Build/container quality | Frontend tests, lint, TypeScript, production build, Docker and SDK URL checks | GitHub Actions workflow |
+| Database migrations/server regressions | Alembic upgrade and full API suite using real PostgreSQL/Redis | Backend workflow and full-stack workflow |
 
-## 8. Known boundaries
+## 8. Complete registered API route inventory (89 operations)
+
+This is the inventory of active FastAPI routes in the repositories. It documents which operations are registered; it does not claim every route is clicked individually in the browser. Backend tests cover route families and database/validation/auth behavior, while the Playwright journey records actual frontend requests for the flows described in this walkthrough. Braced path segments are path parameters.
+
+### Operations endpoints (3)
+
+| Method | Path |
+|---|---|
+| GET | /health |
+| GET | /ready |
+| GET | /metrics |
+
+### Authentication and account security (9)
+
+| Method | Path |
+|---|---|
+| POST | /api/v1/auth/register |
+| POST | /api/v1/auth/login |
+| POST | /api/v1/auth/logout |
+| GET | /api/v1/auth/me |
+| POST | /api/v1/auth/change-password |
+| POST | /api/v1/auth/password-reset/request |
+| POST | /api/v1/auth/password-reset/confirm |
+| POST | /api/v1/auth/verify-email/request |
+| POST | /api/v1/auth/verify-email/confirm |
+
+### Organizations, members, invitations and audit log (12)
+
+| Method | Path |
+|---|---|
+| GET | /api/v1/organizations |
+| POST | /api/v1/organizations |
+| GET | /api/v1/organizations/{org_id} |
+| PATCH | /api/v1/organizations/{org_id} |
+| DELETE | /api/v1/organizations/{org_id} |
+| GET | /api/v1/organizations/{org_id}/members |
+| POST | /api/v1/organizations/{org_id}/members |
+| PATCH | /api/v1/organizations/{org_id}/members/{user_id} |
+| DELETE | /api/v1/organizations/{org_id}/members/{user_id} |
+| GET | /api/v1/organizations/{org_id}/invitations |
+| DELETE | /api/v1/organizations/{org_id}/invitations/{invitation_id} |
+| GET | /api/v1/organizations/{org_id}/audit-logs |
+
+### Projects, keys, usage, purge and person erasure (12)
+
+| Method | Path |
+|---|---|
+| GET | /api/v1/projects |
+| POST | /api/v1/projects |
+| GET | /api/v1/projects/{project_id} |
+| PATCH | /api/v1/projects/{project_id} |
+| DELETE | /api/v1/projects/{project_id} |
+| GET | /api/v1/projects/{project_id}/api-keys |
+| POST | /api/v1/projects/{project_id}/api-keys |
+| DELETE | /api/v1/projects/{project_id}/api-keys/{key_id} |
+| POST | /api/v1/projects/{project_id}/api-keys/{key_id}/rotate |
+| GET | /api/v1/projects/{project_id}/usage |
+| POST | /api/v1/projects/{project_id}/data/purge |
+| DELETE | /api/v1/projects/{project_id}/persons/{person_id} |
+
+### Event ingestion (2)
+
+| Method | Path |
+|---|---|
+| POST | /api/v1/events |
+| POST | /api/v1/events/batch |
+
+### Explorer and metadata (8)
+
+| Method | Path |
+|---|---|
+| GET | /api/v1/events |
+| GET | /api/v1/events/{event_id} |
+| GET | /api/v1/users |
+| GET | /api/v1/users/{person_id} |
+| GET | /api/v1/users/{person_id}/events |
+| GET | /api/v1/meta/event-definitions |
+| GET | /api/v1/meta/property-definitions |
+| GET | /api/v1/meta/property-values |
+
+### Analytics queries (8)
+
+| Method | Path |
+|---|---|
+| POST | /api/v1/analytics/query |
+| POST | /api/v1/analytics/trends |
+| POST | /api/v1/analytics/funnels |
+| POST | /api/v1/analytics/retention |
+| POST | /api/v1/analytics/sessions |
+| POST | /api/v1/analytics/paths |
+| POST | /api/v1/analytics/sessions/list |
+| POST | /api/v1/analytics/overview |
+
+### Cohorts, reports, dashboards, alerts and notifications (27)
+
+| Method | Path |
+|---|---|
+| GET | /api/v1/cohorts |
+| POST | /api/v1/cohorts |
+| GET | /api/v1/cohorts/{cohort_id} |
+| PATCH | /api/v1/cohorts/{cohort_id} |
+| DELETE | /api/v1/cohorts/{cohort_id} |
+| POST | /api/v1/cohorts/{cohort_id}/refresh |
+| GET | /api/v1/cohorts/{cohort_id}/members |
+| POST | /api/v1/cohorts/preview |
+| GET | /api/v1/reports |
+| POST | /api/v1/reports |
+| GET | /api/v1/reports/{report_id} |
+| PATCH | /api/v1/reports/{report_id} |
+| POST | /api/v1/reports/{report_id}/duplicate |
+| DELETE | /api/v1/reports/{report_id} |
+| GET | /api/v1/dashboards |
+| POST | /api/v1/dashboards |
+| GET | /api/v1/dashboards/{dashboard_id} |
+| PATCH | /api/v1/dashboards/{dashboard_id} |
+| POST | /api/v1/dashboards/{dashboard_id}/duplicate |
+| DELETE | /api/v1/dashboards/{dashboard_id} |
+| GET | /api/v1/alerts |
+| POST | /api/v1/alerts |
+| PATCH | /api/v1/alerts/{alert_id} |
+| DELETE | /api/v1/alerts/{alert_id} |
+| POST | /api/v1/alerts/{alert_id}/evaluate |
+| GET | /api/v1/notifications |
+| POST | /api/v1/notifications/read |
+
+### CSV/JSON and asynchronous exports (8)
+
+| Method | Path |
+|---|---|
+| GET | /api/v1/export/events |
+| GET | /api/v1/export/users |
+| GET | /api/v1/export/reports |
+| POST | /api/v1/export/analytics |
+| POST | /api/v1/export/jobs |
+| GET | /api/v1/export/jobs |
+| GET | /api/v1/export/jobs/{job_id} |
+| GET | /api/v1/export/jobs/{job_id}/download |
+
+**Router cleanup:** the unused app/api/v1/alerts.py file was removed after verifying that it was not mounted or imported. Duplicate live alert/notification paths already exist in objects.py; mounting both would create conflicting routes. The active paths are represented above.
+
+## 9. Known boundaries
 
 - Screenshots are generated in the CI browser from the running frontend. They are not hand-drawn illustrations or UI-unit-test snapshots.
 - The event stream used by this walkthrough is synthetic **test data** created in a disposable CI database. No real customer information or production database is used.
 - The existing frontend Vitest suite uses mocked API handlers by design. Its results are useful for UI regression coverage, but not sufficient to claim persistence; the browser/API/SQL workflow is the end-to-end evidence.
 - Deployment health, production credentials, SMTP delivery and a production database cannot be certified from repository source alone. The application’s real deployment URL and production configuration must be available for a separate live-environment smoke test.
 
-## 9. Feature inventory and test tracking
+## 10. Feature inventory and test tracking
 
 | Feature / route | Test target | Status after CI |
 |---|---|---|
-| Sign in, register, forgot/reset password, email verification | Form validation, API responses, session and token lifecycle | See workflow results |
+| Sign in, register, forgot/reset password, email verification and password change | Live API responses, session changes, invalid-token and old/new credential behavior | Browser E2E plus backend auth suite (latest run green) |
 | Overview | KPIs, charts, range and project scope | See workflow results |
 | Trends | Query, chart/table and save/update report | See workflow results |
 | Funnels | Step validation and conversion/drop-off results | See workflow results |
