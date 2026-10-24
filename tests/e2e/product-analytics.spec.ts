@@ -17,7 +17,8 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   page.on("response", r => { if (r.url().includes("/api/v1/") && r.status() >= 500) errors.push(r.status() + " " + r.url()); });
   const email = `qa-${Date.now()}@example.com`;
   const password = "StrongE2EPassword123";
-  const names = { report: "E2E Purchase Trend", cohort: "E2E Purchase Cohort", dashboard: "E2E Analytics Dashboard", alert: "E2E Purchase Alert" };
+  const names = { report: "E2E Purchase Trend", cohort: "E2E Purchase Cohort", dashboard: "E2E Analytics Dashboard", alert: "E2E Purchase Alert", apiKey: "E2E Revocation Test Key" };
+  const updatedProjectName = "Full Stack Test Project - QA";
 
   await page.goto(base + "/login");
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
@@ -97,7 +98,11 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   await page.goto(base + "/insights/cohorts");
   await page.getByRole("button", { name: "New cohort" }).click();
   await page.getByRole("dialog").getByLabel("Name").fill(names.cohort);
+  const cohortPreviewWait = page.waitForResponse(r => r.url().endsWith("/api/v1/cohorts/preview") && r.request().method() === "POST");
   await page.getByRole("dialog").getByLabel("Event", { exact: true }).fill("purchase_completed");
+  const cohortPreview = await cohortPreviewWait;
+  expect(cohortPreview.status()).toBe(200);
+  expect((await cohortPreview.json()).count).toBeGreaterThanOrEqual(1);
   const cohortWait = page.waitForResponse(r => r.url().endsWith("/api/v1/cohorts") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Save cohort" }).click();
   expect((await cohortWait).status()).toBe(201);
@@ -125,8 +130,29 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   await page.getByRole("dialog").getByLabel("Threshold").fill("10000");
   const alertWait = page.waitForResponse(r => r.url().endsWith("/api/v1/alerts") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Create alert" }).click();
-  expect((await alertWait).status()).toBe(201);
+  const alertResponse = await alertWait;
+  expect(alertResponse.status()).toBe(201);
+  const createdAlert = await alertResponse.json();
   await expect(page.getByText(names.alert)).toBeVisible();
+  const evaluateAlertWait = page.waitForResponse(r => r.url().endsWith(`/api/v1/alerts/${createdAlert.id}/evaluate`) && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Evaluate now" }).click();
+  expect((await evaluateAlertWait).status()).toBe(200);
+
+  // Verify a project settings edit persists through the authenticated API.
+  await page.goto(base + "/settings/project");
+  await page.getByLabel("Project name").fill(updatedProjectName);
+  const projectUpdateWait = page.waitForResponse(r => r.url().endsWith(`/api/v1/projects/${project.id}`) && r.request().method() === "PATCH");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  expect((await projectUpdateWait).status()).toBe(200);
+  await expect(page.getByText("Project settings saved")).toBeVisible();
+
+  // Persist a retention setting and leave stored events inside the configured window.
+  await page.goto(base + "/settings/data");
+  await page.getByLabel("Keep events for").selectOption("90");
+  const retentionWait = page.waitForResponse(r => r.url().endsWith(`/api/v1/projects/${project.id}`) && r.request().method() === "PATCH");
+  await page.getByRole("button", { name: "Save retention" }).click();
+  expect((await retentionWait).status()).toBe(200);
+  await expect(page.getByText(/Retention updated/)).toBeVisible();
 
   // Queue a background export in the UI; the worker consumes it and the browser downloads its real CSV output.
   await page.goto(base + "/settings/data");
@@ -139,6 +165,14 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
     page.getByRole("link", { name: /Download/ }).click(),
   ]);
   expect(await download.suggestedFilename()).toBe("events.csv");
+
+  // Destructive project purge must stay disabled until the exact project name is entered.
+  await page.getByRole("button", { name: "Delete all data" }).click();
+  await expect(page.getByRole("heading", { name: "Delete all project data?" })).toBeVisible();
+  await page.getByRole("dialog").getByLabel(`Type "${updatedProjectName}" to confirm`).fill("not-the-project-name");
+  await expect(page.getByRole("dialog").getByRole("button", { name: "Delete all data" })).toBeDisabled();
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
+  expect([...calls].some(call => call === `POST /api/v1/projects/${project.id}/data/purge`)).toBeFalsy();
 
   const routes: Array<[string, string]> = [
     ["/", "05-overview.png"], ["/insights/trends", "06-trends-data.png"], ["/insights/funnels", "07-funnels.png"],
@@ -154,6 +188,34 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
     await expect(page.locator("main")).toBeVisible({ timeout: 20000 });
     await saveShot(page, name);
   }
+
+  // Exercise real API-key creation and revocation from Settings; never include the plaintext key in screenshots.
+  await page.goto(base + "/settings/api-keys");
+  await page.getByRole("button", { name: "New key" }).click();
+  await page.getByRole("dialog").getByLabel("Name").fill(names.apiKey);
+  const createKeyWait = page.waitForResponse(r => r.url().endsWith(`/api/v1/projects/${project.id}/api-keys`) && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Create key" }).click();
+  const createKeyResponse = await createKeyWait;
+  expect(createKeyResponse.status()).toBe(201);
+  const createdKey = await createKeyResponse.json();
+  expect(createdKey.key).toMatch(/^phc_/);
+  await expect(page.getByTestId("api-key-value")).toHaveText(createdKey.key);
+  await page.getByRole("button", { name: "Done" }).click();
+  const keyRow = page.getByRole("row").filter({ hasText: names.apiKey });
+  await expect(keyRow).toBeVisible();
+  await keyRow.getByRole("button", { name: "Revoke" }).click();
+  const revokeKeyWait = page.waitForResponse(r => r.url().includes(`/api/v1/projects/${project.id}/api-keys/`) && r.request().method() === "DELETE");
+  await page.getByRole("dialog").getByRole("button", { name: "Revoke key" }).click();
+  expect((await revokeKeyWait).status()).toBe(200);
+  await expect(keyRow.getByText("Revoked", { exact: true })).toBeVisible();
+
+  // The direct CSV export must also return an actual browser download.
+  await page.goto(base + "/events");
+  const [csvDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Export CSV" }).click(),
+  ]);
+  expect(csvDownload.suggestedFilename()).toMatch(/events.*\.csv|\.csv$/);
 
   await page.getByRole("button", { name: "Account menu" }).click();
   const logoutWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/logout") && r.request().method() === "POST");
@@ -180,7 +242,7 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   expect(errors).toEqual([]);
   fs.mkdirSync("test-results", { recursive: true });
   fs.writeFileSync("test-results/e2e-state.json", JSON.stringify({
-    email, project_id: String(project.id), expected_events: 4,
+    email, project_id: String(project.id), expected_events: 4, project_name: updatedProjectName, retention_days: 90, revoked_key_name: names.apiKey,
     report_name: names.report, cohort_name: names.cohort, dashboard_name: names.dashboard, alert_name: names.alert,
   }, null, 2));
 });
