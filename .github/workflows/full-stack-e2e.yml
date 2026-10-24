@@ -116,6 +116,20 @@ jobs:
           cat /tmp/product-analytics-backend.log
           exit 1
 
+      - name: Start background worker for queued exports
+        working-directory: backend
+        run: |
+          nohup python -m app.workers.main > /tmp/product-analytics-worker.log 2>&1 &
+          for i in $(seq 1 30); do
+            if grep -q "worker started" /tmp/product-analytics-worker.log 2>/dev/null; then
+              echo "Background worker is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/product-analytics-worker.log
+          exit 1
+
       - name: Start the real frontend with the API proxy
         env:
           VITE_BACKEND_URL: http://127.0.0.1:8000
@@ -159,10 +173,11 @@ jobs:
                       "saved cohort": await conn.fetchval("SELECT count(*) FROM cohorts WHERE project_id = $1::uuid AND name = $2", pid, state["cohort_name"]),
                       "saved dashboard": await conn.fetchval("SELECT count(*) FROM dashboards WHERE project_id = $1::uuid AND name = $2", pid, state["dashboard_name"]),
                       "saved alert": await conn.fetchval("SELECT count(*) FROM alerts WHERE project_id = $1::uuid AND name = $2", pid, state["alert_name"]),
+                      "finished export job": await conn.fetchval("SELECT count(*) FROM export_jobs WHERE project_id = $1::uuid AND status = 'done'", pid),
                   }
                   for label, count in checks.items():
                       print(f"{label}: {count}")
-                  expected = {"registered user": 1, "project": 1, "API key record": 1, "saved report": 1, "saved cohort": 1, "saved dashboard": 1, "saved alert": 1}
+                  expected = {"registered user": 1, "project": 1, "API key record": 1, "saved report": 1, "saved cohort": 1, "saved dashboard": 1, "saved alert": 1, "finished export job": 1}
                   failures = [f"{label} expected >= {minimum}, got {checks[label]}" for label, minimum in expected.items() if checks[label] < minimum]
                   for label, minimum in (("ingested events", state["expected_events"]), ("resolved people", 2), ("event definitions", 3)):
                       if checks[label] < minimum:
@@ -212,3 +227,4 @@ jobs:
             test-results/
             /tmp/product-analytics-backend.log
             /tmp/product-analytics-frontend.log
+            /tmp/product-analytics-worker.log
