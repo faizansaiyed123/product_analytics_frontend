@@ -5,33 +5,26 @@ import path from "node:path";
 const base = "http://127.0.0.1:5173";
 const visuals = path.resolve("docs/testing/visuals");
 fs.mkdirSync(visuals, { recursive: true });
-
-async function screenshot(page: import("@playwright/test").Page, name: string) {
+const saveShot = async (page: import("@playwright/test").Page, name: string) => {
   await page.waitForLoadState("networkidle");
   await page.screenshot({ path: path.join(visuals, name), fullPage: true, animations: "disabled" });
-}
+};
 
-test("real UI -> FastAPI -> PostgreSQL product journey", async ({ page }) => {
+test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) => {
   const calls = new Set<string>();
-  const serverErrors: string[] = [];
-  page.on("request", (r) => {
-    if (r.url().includes("/api/v1/")) calls.add(r.method() + " " + new URL(r.url()).pathname);
-  });
-  page.on("response", (r) => {
-    if (r.url().includes("/api/v1/") && r.status() >= 500) serverErrors.push(r.status() + " " + r.url());
-  });
-
+  const errors: string[] = [];
+  page.on("request", r => { if (r.url().includes("/api/v1/")) calls.add(r.method() + " " + new URL(r.url()).pathname); });
+  page.on("response", r => { if (r.url().includes("/api/v1/") && r.status() >= 500) errors.push(r.status() + " " + r.url()); });
   const email = `qa-${Date.now()}@example.com`;
   const password = "StrongE2EPassword123";
   const names = { report: "E2E Purchase Trend", cohort: "E2E Purchase Cohort", dashboard: "E2E Analytics Dashboard", alert: "E2E Purchase Alert" };
 
   await page.goto(base + "/login");
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
-  await screenshot(page, "00-login.png");
-
+  await saveShot(page, "00-login.png");
   await page.goto(base + "/register");
   await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
-  await screenshot(page, "01-register.png");
+  await saveShot(page, "01-register.png");
   await page.getByLabel("Your name").fill("Full Stack Test Owner");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
@@ -40,7 +33,7 @@ test("real UI -> FastAPI -> PostgreSQL product journey", async ({ page }) => {
   await page.getByRole("button", { name: "Create account" }).click();
   expect((await registerWait).status()).toBe(201);
   await expect(page.getByRole("heading", { name: "Create your first project" })).toBeVisible();
-  await screenshot(page, "02-first-project.png");
+  await saveShot(page, "02-first-project.png");
 
   await page.getByLabel("Project name").fill("Full Stack Test Project");
   const projectWait = page.waitForResponse(r => r.url().endsWith("/api/v1/projects") && r.request().method() === "POST");
@@ -50,16 +43,15 @@ test("real UI -> FastAPI -> PostgreSQL product journey", async ({ page }) => {
   const project = await projectResponse.json();
   const apiKey = (await page.getByTestId("api-key-value").innerText()).trim();
   expect(apiKey).toMatch(/^phc_/);
-  // The one-time secret is never captured into committed screenshots.
   await page.getByTestId("api-key-value").evaluate(node => { node.textContent = "phc_TEST_KEY_REDACTED"; });
-  await screenshot(page, "03-api-key-redacted.png");
+  await saveShot(page, "03-api-key-redacted.png");
   await page.getByRole("button", { name: "Continue to workspace" }).click();
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
 
-  // These are isolated test events sent through the real public ingestion endpoint, not mocked responses.
+  // Isolated test events use the actual ingestion API and production ingestion service, not MSW or fixtures.
   const now = Date.now();
   const event = (name: string, distinct_id: string, uuid: string, minutes: number, properties: object) => ({
-    event: name, distinct_id, uuid, timestamp: new Date(now - minutes * 60_000).toISOString(), properties,
+    event: name, distinct_id, uuid, timestamp: new Date(now - minutes * 60000).toISOString(), properties,
     context: { country: "IN", browser: "Chromium", device_type: "desktop" },
   });
   const events = [
@@ -75,12 +67,11 @@ test("real UI -> FastAPI -> PostgreSQL product journey", async ({ page }) => {
   expect(ingested.status).toBe(200);
   expect(ingested.body.accepted).toBe(4);
 
-  await page.goto(base + "/insights/trends");
   const queryWait = page.waitForResponse(r => r.url().includes("/api/v1/analytics/query") && r.request().method() === "POST");
-  const queryResponse = await queryWait;
-  expect(queryResponse.ok()).toBeTruthy();
-  await expect(page.getByRole("button", { name: "Save as report" })).toBeEnabled({ timeout: 20_000 });
-  await screenshot(page, "04-trends.png");
+  await page.goto(base + "/insights/trends");
+  expect((await queryWait).ok()).toBeTruthy();
+  await expect(page.getByRole("button", { name: "Save as report" })).toBeEnabled({ timeout: 20000 });
+  await saveShot(page, "04-trends.png");
   await page.getByRole("button", { name: "Save as report" }).click();
   await page.getByRole("dialog").getByLabel("Name").fill(names.report);
   const reportWait = page.waitForResponse(r => r.url().endsWith("/api/v1/reports") && r.request().method() === "POST");
@@ -100,9 +91,9 @@ test("real UI -> FastAPI -> PostgreSQL product journey", async ({ page }) => {
   await page.goto(base + "/dashboards");
   await page.getByRole("button", { name: "New dashboard" }).click();
   await page.getByRole("dialog").getByLabel("Name").fill(names.dashboard);
-  const dashWait = page.waitForResponse(r => r.url().endsWith("/api/v1/dashboards") && r.request().method() === "POST");
+  const dashboardWait = page.waitForResponse(r => r.url().endsWith("/api/v1/dashboards") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Create", exact: true }).click();
-  expect((await dashWait).status()).toBe(201);
+  expect((await dashboardWait).status()).toBe(201);
   await expect(page.getByRole("heading", { name: names.dashboard })).toBeVisible();
   await page.getByRole("button", { name: "Add widget" }).click();
   await page.getByRole("dialog").getByLabel("Report").selectOption({ label: names.report + " (trend)" });
@@ -120,3 +111,45 @@ test("real UI -> FastAPI -> PostgreSQL product journey", async ({ page }) => {
   await page.getByRole("button", { name: "Create alert" }).click();
   expect((await alertWait).status()).toBe(201);
   await expect(page.getByText(names.alert)).toBeVisible();
+
+  const routes: Array<[string, string]> = [
+    ["/", "05-overview.png"], ["/insights/trends", "06-trends-data.png"], ["/insights/funnels", "07-funnels.png"],
+    ["/insights/retention", "08-retention.png"], ["/insights/paths", "09-journeys.png"], ["/insights/cohorts", "10-cohorts.png"],
+    ["/events", "11-events.png"], ["/users", "12-users.png"], ["/sessions", "13-sessions.png"],
+    ["/dashboards", "14-dashboards.png"], ["/reports", "15-reports.png"], ["/settings/project", "16-project-settings.png"],
+    ["/settings/api-keys", "17-api-keys.png"], ["/settings/team", "18-team.png"], ["/settings/alerts", "19-alerts.png"],
+    ["/settings/data", "20-data-management.png"], ["/settings/security", "21-security.png"],
+  ];
+  for (const [route, name] of routes) {
+    const response = await page.goto(base + route);
+    expect(response?.status(), route).toBe(200);
+    await expect(page.locator("main")).toBeVisible({ timeout: 20000 });
+    await saveShot(page, name);
+  }
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible({ timeout: 20000 });
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("WrongPassword123");
+  const badLoginWait = page.waitForResponse(r => r.url().includes("/api/v1/auth/login") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  expect((await badLoginWait).status()).toBe(401);
+  await expect(page.getByRole("alert")).toContainText("Incorrect email or password.");
+  await saveShot(page, "22-invalid-login.png");
+  await page.getByLabel("Password").fill(password);
+  const goodLoginWait = page.waitForResponse(r => r.url().includes("/api/v1/auth/login") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  expect((await goodLoginWait).status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+
+  for (const prefix of ["POST /api/v1/auth/register", "POST /api/v1/projects", "POST /api/v1/events/batch", "POST /api/v1/analytics/query", "POST /api/v1/reports", "POST /api/v1/cohorts", "POST /api/v1/dashboards", "PATCH /api/v1/dashboards/", "POST /api/v1/alerts", "POST /api/v1/auth/logout", "POST /api/v1/auth/login"]) {
+    expect([...calls].some(call => call.startsWith(prefix)), prefix).toBeTruthy();
+  }
+  expect(errors).toEqual([]);
+  fs.mkdirSync("test-results", { recursive: true });
+  fs.writeFileSync("test-results/e2e-state.json", JSON.stringify({
+    email, project_id: String(project.id), expected_events: 4,
+    report_name: names.report, cohort_name: names.cohort, dashboard_name: names.dashboard, alert_name: names.alert,
+  }, null, 2));
+});
