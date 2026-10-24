@@ -78,7 +78,7 @@ test("event details, erasure, key rotation, alerts and team invites", async ({ p
   await expect(eventDialog.getByRole("link", { name: erasedDistinctId, exact: true })).toBeVisible();
   await saveShot(page, "29-event-detail.png");
 
-  const detailWait = page.waitForResponse(r => r.url().includes("/api/v1/events/") && r.request().method() === "GET");
+  const detailWait = page.waitForResponse(r => r.url().includes("/api/v1/users/") && !r.url().includes("/events") && r.request().method() === "GET");
   await eventDialog.getByRole("link", { name: erasedDistinctId, exact: true }).click();
   await expect.poll(() => new URL(page.url()).pathname).toMatch(/^\/users\//);
   const detailResponse = await detailWait;
