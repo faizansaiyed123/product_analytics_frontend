@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthCtx = {
     me, loading: q.isLoading,
     setMe: (m) => qc.setQueryData(ME_KEY, m),
-    logout: async () => { try { await authApi.logout(); } finally { qc.clear(); qc.setQueryData(ME_KEY, null); } },
+    logout: async () => { try { await authApi.logout(); } finally { qc.setQueryData(ME_KEY, null); qc.removeQueries({ predicate: (query) => query.queryKey[0] !== ME_KEY[0] }); } },
   };
   if (q.error && !(q.error instanceof ApiError && q.error.status === 401)) {
     return <div role="alert" className="p-8 text-center text-sm">Cannot reach the API. Is the backend running?</div>;
