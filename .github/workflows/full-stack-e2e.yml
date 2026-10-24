@@ -164,8 +164,10 @@ jobs:
                   pid, email = state["project_id"], state["email"].lower()
                   checks = {
                       "registered user": await conn.fetchval("SELECT count(*) FROM users WHERE lower(email) = $1", email),
-                      "project": await conn.fetchval("SELECT count(*) FROM projects WHERE id = $1::uuid", pid),
+                      "project": await conn.fetchval("SELECT count(*) FROM projects WHERE id = $1::uuid AND name = $2", pid, state["project_name"]),
                       "API key record": await conn.fetchval("SELECT count(*) FROM api_keys WHERE project_id = $1::uuid AND revoked_at IS NULL", pid),
+                      "revoked API key": await conn.fetchval("SELECT count(*) FROM api_keys WHERE project_id = $1::uuid AND name = $2 AND revoked_at IS NOT NULL", pid, state["revoked_key_name"]),
+                      "retention setting": await conn.fetchval("SELECT count(*) FROM projects WHERE id = $1::uuid AND settings->>'retention_days' = $2", pid, str(state["retention_days"])),
                       "ingested events": await conn.fetchval("SELECT count(*) FROM events WHERE project_id = $1::uuid", pid),
                       "resolved people": await conn.fetchval("SELECT count(*) FROM persons WHERE project_id = $1::uuid", pid),
                       "event definitions": await conn.fetchval("SELECT count(*) FROM event_definitions WHERE project_id = $1::uuid", pid),
@@ -177,7 +179,7 @@ jobs:
                   }
                   for label, count in checks.items():
                       print(f"{label}: {count}")
-                  expected = {"registered user": 1, "project": 1, "API key record": 1, "saved report": 1, "saved cohort": 1, "saved dashboard": 1, "saved alert": 1, "finished export job": 1}
+                  expected = {"registered user": 1, "project": 1, "API key record": 1, "revoked API key": 1, "retention setting": 1, "saved report": 1, "saved cohort": 1, "saved dashboard": 1, "saved alert": 1, "finished export job": 1}
                   failures = [f"{label} expected >= {minimum}, got {checks[label]}" for label, minimum in expected.items() if checks[label] < minimum]
                   for label, minimum in (("ingested events", state["expected_events"]), ("resolved people", 2), ("event definitions", 3)):
                       if checks[label] < minimum:
