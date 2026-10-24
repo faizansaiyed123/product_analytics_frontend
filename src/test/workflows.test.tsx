@@ -101,12 +101,12 @@ describe("Dashboards", () => {
     expect(await screen.findByRole("region", { name: "First" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /edit layout/i }));
     await userEvent.click(screen.getByRole("button", { name: "Width of First" }));
-    await userEvent.click(screen.getByRole("option", { name: "Full", exact: true }));
+    await userEvent.click(screen.getByRole("option", { name: "Full" }));
     await userEvent.click(within(screen.getByRole("region", { name: "First" })).getByRole("button", { name: "Move widget down" }));
     await userEvent.click(within(screen.getByRole("region", { name: "Second" })).getByRole("button", { name: /remove widget/i }));
     await userEvent.click(screen.getByRole("button", { name: /^add widget$/i }));
     await userEvent.click(await screen.findByLabelText("Report", { selector: "button" }));
-    await userEvent.click(screen.getByRole("option", { name: "Purchases (trend)", exact: true }));
+    await userEvent.click(screen.getByRole("option", { name: "Purchases (trend)" }));
     await userEvent.type(screen.getByLabelText("Widget title (optional)"), "New one");
     await userEvent.click(screen.getByRole("button", { name: "Add to dashboard" }));
     await userEvent.click(screen.getByRole("button", { name: "Save dashboard" }));

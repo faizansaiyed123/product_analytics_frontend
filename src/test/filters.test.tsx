@@ -22,7 +22,7 @@ describe("FilterBuilder", () => {
     const row = screen.getByTestId("filter-row");
     await userEvent.type(within(row).getByLabelText("Property name"), "amount");
     await userEvent.click(within(row).getByLabelText("Operator", { selector: "button" }));
-    await userEvent.click(within(row).getByRole("option", { name: ">", exact: true }));
+    await userEvent.click(within(row).getByRole("option", { name: ">" }));
     await userEvent.type(within(row).getByLabelText("Filter value"), "50");
     expect(latest).toEqual([{ type: "event", property: "amount", operator: "gt", value: 50 }]);
   });
@@ -32,14 +32,14 @@ describe("FilterBuilder", () => {
     await userEvent.click(screen.getByRole("button", { name: /add filter/i }));
     const row = screen.getByTestId("filter-row");
     await userEvent.click(within(row).getByLabelText("Property type", { selector: "button" }));
-    await userEvent.click(within(row).getByRole("option", { name: "User", exact: true }));
+    await userEvent.click(within(row).getByRole("option", { name: "User" }));
     await userEvent.type(within(row).getByLabelText("Property name"), "plan");
     await userEvent.click(within(row).getByLabelText("Operator", { selector: "button" }));
-    await userEvent.click(within(row).getByRole("option", { name: "is one of", exact: true }));
+    await userEvent.click(within(row).getByRole("option", { name: "is one of" }));
     await userEvent.type(within(row).getByLabelText("Filter value"), "pro, team");
     expect(latest[0]).toMatchObject({ type: "person", property: "plan", operator: "in", value: ["pro", "team"] });
     await userEvent.click(within(row).getByLabelText("Operator", { selector: "button" }));
-    await userEvent.click(within(row).getByRole("option", { name: "is set", exact: true }));
+    await userEvent.click(within(row).getByRole("option", { name: "is set" }));
     expect(within(row).queryByLabelText("Filter value")).not.toBeInTheDocument();
     expect(latest[0].type !== "cohort" && latest[0].value).toBeUndefined();
   });

@@ -22,7 +22,7 @@ describe("Trends page", () => {
     await userEvent.clear(ev);
     await userEvent.type(ev, "purchase");
     await userEvent.click(screen.getByLabelText("Metric", { selector: "button" }));
-    await userEvent.click(screen.getByRole("option", { name: "Unique users", exact: true }));
+    await userEvent.click(screen.getByRole("option", { name: "Unique users" }));
     await waitFor(() => expect(bodies.at(-1)?.query).toMatchObject({ type: "trend", metric: "unique_users", series: [{ event: "purchase" }], date_range: { from: "2026-08-03", to: "2026-08-09" }, interval: "day" }));
     expect(bodies.at(-1).project_id).toBe("p1");
     expect(await screen.findByRole("img", { name: /chart of purchase/ })).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe("Trends page", () => {
     await screen.findByLabelText("Event 1");
     await userEvent.click(screen.getByRole("button", { name: /add filter/i }));  // incomplete row
     await userEvent.click(screen.getByLabelText("Metric", { selector: "button" }));
-    await userEvent.click(screen.getByRole("option", { name: "Sum of property", exact: true }));
+    await userEvent.click(screen.getByRole("option", { name: "Sum of property" }));
     expect(await screen.findByText("Required for this metric")).toBeInTheDocument();
     expect(screen.getByText("Finish setting up the query")).toBeInTheDocument();
     const before = bodies.length;
