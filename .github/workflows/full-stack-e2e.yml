@@ -194,20 +194,30 @@ jobs:
           docker build --tag product-analytics-frontend:e2e .
           docker run --detach --rm --name product-analytics-frontend-e2e --add-host=backend:host-gateway -p 127.0.0.1:8080:80 product-analytics-frontend:e2e
           trap 'docker stop product-analytics-frontend-e2e >/dev/null 2>&1 || true' EXIT
+          # Wait for Nginx from inside the container, then verify the host port mapping too.
+          ready=0
+          for attempt in $(seq 1 30); do
+            if ! docker inspect --format '{{.State.Running}}' product-analytics-frontend-e2e 2>/dev/null | grep -q true; then
+              docker logs product-analytics-frontend-e2e || true
+              exit 1
+            fi
+            if docker exec product-analytics-frontend-e2e wget -q -O /dev/null http://127.0.0.1/login; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            docker logs product-analytics-frontend-e2e
+            exit 1
+          fi
           for url in /login /sdk/analytics.min.js /sdk/analytics.esm.js; do
             rm -f /tmp/response-body
-            ready=0
-            for attempt in $(seq 1 20); do
-              if curl --connect-timeout 2 --max-time 8 --fail --silent --show-error "http://127.0.0.1:8080$url" -o /tmp/response-body && test -s /tmp/response-body; then
-                ready=1
-                break
-              fi
-              sleep 1
-            done
-            if [ "$ready" -ne 1 ]; then
+            if ! curl --retry 5 --retry-all-errors --retry-delay 1 --connect-timeout 2 --max-time 8 --fail --silent --show-error "http://127.0.0.1:8080$url" -o /tmp/response-body; then
               docker logs product-analytics-frontend-e2e
               exit 1
             fi
+            test -s /tmp/response-body
             echo "OK $url"
           done
 
