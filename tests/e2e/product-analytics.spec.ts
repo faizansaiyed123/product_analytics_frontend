@@ -248,6 +248,15 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   await expect(page.getByText("Password changed. Other sessions were signed out.")).toBeVisible();
   await saveShot(page, "23-security-password-changed.png");
 
+  // The current session remains valid after the change; sign out before testing anonymous auth pages.
+  await page.goto(base + "/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+  await page.getByRole("button", { name: "Account menu" }).click();
+  const changedSessionLogoutWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/logout") && r.request().method() === "POST");
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
+  expect((await changedSessionLogoutWait).status()).toBe(200);
+  await expect.poll(() => new URL(page.url()).pathname).toBe("/login");
+
   // Verify forgot/reset/verification pages use the live API and fail safely for an expired or invalid token.
   await page.goto(base + "/forgot-password");
   await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
