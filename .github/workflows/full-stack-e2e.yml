@@ -191,6 +191,73 @@ jobs:
           asyncio.run(main())
           PY
 
+      - name: Verify detail erasure, rotated keys, notifications and invitation state in PostgreSQL
+        working-directory: backend
+        run: |
+          python - <<'PY'
+          import asyncio, json, os
+          import asyncpg
+
+          async def main():
+              state_path = "../test-results/e2e-secondary-state.json"
+              if not os.path.exists(state_path):
+                  raise SystemExit("Secondary E2E state file was not produced")
+              with open(state_path, encoding="utf-8") as f:
+                  state = json.load(f)
+              dsn = os.environ["DATABASE_URL"].replace("postgresql+asyncpg://", "postgresql://", 1)
+              conn = await asyncpg.connect(dsn)
+              try:
+                  pid = state["project_id"]
+                  checks = {
+                      "secondary project": await conn.fetchval(
+                          "SELECT count(*) FROM projects WHERE id = $1::uuid AND name = $2", pid, state["project_name"]
+                      ),
+                      "erased person mapping": await conn.fetchval(
+                          "SELECT count(*) FROM person_distinct_ids WHERE project_id = $1::uuid AND distinct_id = $2",
+                          pid, state["erased_distinct_id"]
+                      ),
+                      "erased person events": await conn.fetchval(
+                          "SELECT count(*) FROM events WHERE project_id = $1::uuid AND distinct_id = $2",
+                          pid, state["erased_distinct_id"]
+                      ),
+                      "active rotated API key": await conn.fetchval(
+                          "SELECT count(*) FROM api_keys WHERE project_id = $1::uuid AND name = $2 AND revoked_at IS NULL",
+                          pid, state["rotation_key_name"]
+                      ),
+                      "revoked prior API key": await conn.fetchval(
+                          "SELECT count(*) FROM api_keys WHERE project_id = $1::uuid AND name = $2 AND revoked_at IS NOT NULL",
+                          pid, state["rotation_key_name"]
+                      ),
+                      "accepted event with rotated key": await conn.fetchval(
+                          "SELECT count(*) FROM events WHERE project_id = $1::uuid AND distinct_id = $2",
+                          pid, state["rotation_probe_distinct_id"]
+                      ),
+                      "read alert notification": await conn.fetchval(
+                          "SELECT count(*) FROM notifications WHERE project_id = $1::uuid AND title = $2 AND read_at IS NOT NULL",
+                          pid, "Alert: " + state["alert_name"]
+                      ),
+                      "pending revoked invitation": await conn.fetchval(
+                          "SELECT count(*) FROM invitations WHERE org_id = $1::uuid AND lower(email) = lower($2) AND accepted_at IS NULL",
+                          state["org_id"], state["invite_email"]
+                      ),
+                  }
+                  for label, count in checks.items():
+                      print(f"{label}: {count}")
+                  failures = []
+                  for label in ("secondary project", "active rotated API key", "revoked prior API key", "accepted event with rotated key", "read alert notification"):
+                      if checks[label] < 1:
+                          failures.append(f"{label} expected >= 1, got {checks[label]}")
+                  for label in ("erased person mapping", "erased person events", "pending revoked invitation"):
+                      if checks[label] != 0:
+                          failures.append(f"{label} expected 0, got {checks[label]}")
+                  if failures:
+                      raise SystemExit("\n".join(failures))
+              finally:
+                  await conn.close()
+
+          asyncio.run(main())
+          PY
+
       - name: Verify production frontend container and public SDK paths
         run: |
           docker build --tag product-analytics-frontend:e2e .
