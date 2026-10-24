@@ -237,7 +237,61 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   expect((await goodLoginWait).status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
 
-  for (const prefix of ["POST /api/v1/auth/register", "POST /api/v1/projects", "POST /api/v1/events/batch", "POST /api/v1/analytics/overview", "POST /api/v1/analytics/query", "POST /api/v1/reports", "POST /api/v1/cohorts", "POST /api/v1/dashboards", "PATCH /api/v1/dashboards/", "POST /api/v1/alerts", "POST /api/v1/auth/logout", "POST /api/v1/auth/login"]) {
+  // Verify the account-security screen updates the actual password and keeps the current session alive.
+  const changedPassword = "E2eChangedPassword2026!";
+  await page.goto(base + "/settings/security");
+  await page.getByLabel("Current password").fill(password);
+  await page.getByLabel("New password").fill(changedPassword);
+  const changePasswordWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/change-password") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Change password" }).click();
+  expect((await changePasswordWait).status()).toBe(200);
+  await expect(page.getByText("Password changed. Other sessions were signed out.")).toBeVisible();
+  await saveShot(page, "23-security-password-changed.png");
+
+  // Verify forgot/reset/verification pages use the live API and fail safely for an expired or invalid token.
+  await page.goto(base + "/forgot-password");
+  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
+  await page.getByLabel("Email").fill(email);
+  const resetRequestWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/password-reset/request") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  expect((await resetRequestWait).status()).toBe(202);
+  await expect(page.getByRole("status")).toContainText("If an account exists");
+  await saveShot(page, "24-forgot-password.png");
+
+  await page.goto(base + "/reset-password?token=invalid-e2e-token");
+  await expect(page.getByRole("heading", { name: "Choose a new password" })).toBeVisible();
+  await saveShot(page, "25-reset-password.png");
+  await page.getByLabel("New password").fill("weak");
+  await expect(page.getByRole("button", { name: "Update password" })).toBeDisabled();
+  await page.getByLabel("New password").fill("AnotherStrongPassword2026!");
+  const resetConfirmWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/password-reset/confirm") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Update password" }).click();
+  expect((await resetConfirmWait).status()).toBe(400);
+  await expect(page.getByRole("alert")).toBeVisible();
+  await saveShot(page, "26-reset-password-invalid-token.png");
+
+  const verifyEmailWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/verify-email/confirm") && r.request().method() === "POST");
+  await page.goto(base + "/verify-email?token=invalid-e2e-token");
+  expect((await verifyEmailWait).status()).toBe(400);
+  await expect(page.getByRole("alert")).toBeVisible();
+  await saveShot(page, "27-verify-email-invalid-token.png");
+
+  // Confirm that the old password is rejected and the new password works in a fresh session.
+  await page.goto(base + "/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  const oldPasswordWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/login") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  expect((await oldPasswordWait).status()).toBe(401);
+  await expect(page.getByRole("alert")).toContainText("Incorrect email or password.");
+  await saveShot(page, "28-old-password-rejected.png");
+  await page.getByLabel("Password").fill(changedPassword);
+  const changedLoginWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/login") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  expect((await changedLoginWait).status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+
+  for (const prefix of ["POST /api/v1/auth/register", "POST /api/v1/projects", "POST /api/v1/events/batch", "POST /api/v1/analytics/overview", "POST /api/v1/analytics/query", "POST /api/v1/reports", "POST /api/v1/cohorts", "POST /api/v1/cohorts/preview", "POST /api/v1/dashboards", "PATCH /api/v1/dashboards/", "POST /api/v1/alerts", "POST /api/v1/alerts/", "PATCH /api/v1/projects/", "POST /api/v1/projects/", "DELETE /api/v1/projects/", "POST /api/v1/export/jobs", "GET /api/v1/export/events", "POST /api/v1/auth/change-password", "POST /api/v1/auth/password-reset/request", "POST /api/v1/auth/password-reset/confirm", "POST /api/v1/auth/verify-email/confirm", "POST /api/v1/auth/logout", "POST /api/v1/auth/login"]) {
     expect([...calls].some(call => call.startsWith(prefix)), prefix).toBeTruthy();
   }
   expect(errors).toEqual([]);
