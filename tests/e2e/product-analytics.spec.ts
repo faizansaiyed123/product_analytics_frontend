@@ -141,7 +141,10 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   }
 
   await page.getByRole("button", { name: "Account menu" }).click();
+  const logoutWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/logout") && r.request().method() === "POST");
   await page.getByRole("menuitem", { name: "Sign out" }).click();
+  expect((await logoutWait).status()).toBe(200);
+  await expect(page).toHaveURL(/\\/login$/);
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible({ timeout: 20000 });
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("WrongPassword123");
