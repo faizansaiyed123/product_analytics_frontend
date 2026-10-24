@@ -1,8 +1,10 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowDownRight, ArrowUpRight, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { RetentionHeatmap } from "@/components/charts/Heatmap";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, LoadingBlock, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { useRange } from "@/hooks/useRange";
 import { useWorkspaceProject } from "@/layouts/WorkspaceLayout";
@@ -36,13 +38,23 @@ function MiniSeries({ labels, data, interval, kind, name }: { labels: string[]; 
 export function OverviewPage() {
   const project = useWorkspaceProject();
   const { date_range, timezone } = useRange();
-  const q = useQuery<Overview>({ queryKey: ["overview", project.id, date_range, timezone], queryFn: () => analyticsApi.overview(project.id, date_range, timezone ?? undefined), placeholderData: keepPreviousData, staleTime: 30_000 });
+  const queryClient = useQueryClient();
+  const overviewKey = ["overview", project.id, date_range, timezone];
+  const q = useQuery<Overview>({ queryKey: overviewKey, queryFn: () => analyticsApi.overview(project.id, date_range, timezone ?? undefined), placeholderData: keepPreviousData, staleTime: 30_000 });
+  const refreshOverview = useMutation({
+    mutationFn: () => analyticsApi.overview(project.id, date_range, timezone ?? undefined, true),
+    onSuccess: (data) => {
+      queryClient.setQueryData(overviewKey, data);
+      toast.success("Overview refreshed");
+    },
+    onError: () => toast.error("Could not refresh overview. Please try again."),
+  });
   const o = q.data;
   const k = (key: keyof Kpis) => o?.kpis[key] ?? null;
   const pk = (key: keyof Kpis) => (o ? (o.previous_kpis?.[key] ?? null) : undefined);
   return (
     <>
-      <PageHeader title="Overview" description={`${project.name} · ${rangeLabel(date_range)}`} />
+      <PageHeader title="Overview" description={`${project.name} · ${rangeLabel(date_range)}`} actions={<Button size="sm" loading={refreshOverview.isPending} onClick={() => refreshOverview.mutate()}><RefreshCw className="h-3.5 w-3.5" aria-hidden />Refresh data</Button>} />
       {q.isError ? <Card><ErrorState error={q.error} onRetry={() => q.refetch()} /></Card> : !o ? <LoadingBlock label="Loading overview" height="h-96" /> : o.kpis.total_events === 0 && o.kpis.total_users === 0 ? (
         <Card><EmptyState title="No data yet" description={<>Install the tracking SDK and send your first event. See <Link className="text-primary hover:underline" to="/settings/api-keys">API Keys</Link> for your project key and the SDK docs for a 3-line setup.</>} /></Card>
       ) : (
