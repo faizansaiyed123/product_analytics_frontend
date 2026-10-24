@@ -1,8 +1,11 @@
 name: Full-stack integration and visual walkthrough
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
