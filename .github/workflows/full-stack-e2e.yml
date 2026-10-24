@@ -58,7 +58,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: faizansaiyed123/product_analytics_backend
-          ref: main
+          ref: qa/fix-rate-limit-test-flakiness
           path: backend
 
       - name: Set up Python
