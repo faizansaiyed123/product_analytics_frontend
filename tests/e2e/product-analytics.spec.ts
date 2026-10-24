@@ -148,7 +148,8 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
 
   // Persist a retention setting and leave stored events inside the configured window.
   await page.goto(base + "/settings/data");
-  await page.getByLabel("Keep events for").selectOption("90");
+  await page.getByLabel("Keep events for", { selector: "button" }).click();
+  await page.getByRole("option", { name: "90 days", exact: true }).click();
   const retentionWait = page.waitForResponse(r => r.url().endsWith(`/api/v1/projects/${project.id}`) && r.request().method() === "PATCH");
   await page.getByRole("button", { name: "Save retention" }).click();
   expect((await retentionWait).status()).toBe(200);
