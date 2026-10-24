@@ -67,6 +67,21 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   expect(ingested.status).toBe(200);
   expect(ingested.body.accepted).toBe(4);
 
+  // Overview may have cached the empty state before the events arrived; the visible refresh button
+  // must bypass that cache and render totals from the records now persisted in PostgreSQL.
+  const overviewRefreshWait = page.waitForResponse(r =>
+    r.url().endsWith("/api/v1/analytics/overview") &&
+    r.request().method() === "POST" &&
+    r.request().postDataJSON()?.refresh === true,
+  );
+  await page.getByRole("button", { name: "Refresh data" }).click();
+  const overviewRefresh = await overviewRefreshWait;
+  expect(overviewRefresh.status()).toBe(200);
+  const overviewBody = await overviewRefresh.json();
+  expect(overviewBody.kpis.total_events).toBe(4);
+  await expect(page.getByTestId("kpi-Total events")).toHaveText("4");
+  await capture(page, "05-overview.png");
+
   const queryWait = page.waitForResponse(r => r.url().includes("/api/v1/analytics/query") && r.request().method() === "POST");
   await page.goto(base + "/insights/trends");
   expect((await queryWait).ok()).toBeTruthy();
@@ -159,7 +174,7 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   expect((await goodLoginWait).status()).toBe(200);
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
 
-  for (const prefix of ["POST /api/v1/auth/register", "POST /api/v1/projects", "POST /api/v1/events/batch", "POST /api/v1/analytics/query", "POST /api/v1/reports", "POST /api/v1/cohorts", "POST /api/v1/dashboards", "PATCH /api/v1/dashboards/", "POST /api/v1/alerts", "POST /api/v1/auth/logout", "POST /api/v1/auth/login"]) {
+  for (const prefix of ["POST /api/v1/auth/register", "POST /api/v1/projects", "POST /api/v1/events/batch", "POST /api/v1/analytics/overview", "POST /api/v1/analytics/query", "POST /api/v1/reports", "POST /api/v1/cohorts", "POST /api/v1/dashboards", "PATCH /api/v1/dashboards/", "POST /api/v1/alerts", "POST /api/v1/auth/logout", "POST /api/v1/auth/login"]) {
     expect([...calls].some(call => call.startsWith(prefix)), prefix).toBeTruthy();
   }
   expect(errors).toEqual([]);
