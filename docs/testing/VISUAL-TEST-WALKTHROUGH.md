@@ -118,7 +118,7 @@ Reports save a query definition and visualization settings so you can revisit an
 
 ![Dashboards](visuals/14-dashboards.png)
 
-A dashboard can contain saved-report widgets. The test creates a dashboard, adds the report as a widget and saves the layout through a real the relevant application service request. The database check verifies that the dashboard persisted.
+A dashboard can contain saved-report widgets. Add a report as a widget and save the layout to keep your key metrics together.
 
 ## 6. Project and workspace administration
 
@@ -150,7 +150,7 @@ An alert defines a metric, condition and evaluation period, with an optional web
 
 ![Data management](visuals/20-data-management.png)
 
-Data management exposes usage and retention controls, event deletion requests, and person erasure. Destructive actions require the appropriate role and explicit confirmation; they should be checked with fresh reads after execution.
+Data management brings together usage and retention controls, event deletion requests, and person erasure. Destructive actions require the appropriate role and explicit confirmation.
 
 ### Security
 
