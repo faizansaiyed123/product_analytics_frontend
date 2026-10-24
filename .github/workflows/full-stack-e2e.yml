@@ -195,8 +195,19 @@ jobs:
           docker run --detach --rm --name product-analytics-frontend-e2e --add-host=backend:host-gateway -p 127.0.0.1:8080:80 product-analytics-frontend:e2e
           trap 'docker stop product-analytics-frontend-e2e >/dev/null 2>&1 || true' EXIT
           for url in /login /sdk/analytics.min.js /sdk/analytics.esm.js; do
-            curl --fail --silent --show-error "http://127.0.0.1:8080$url" -o /tmp/response-body
-            test -s /tmp/response-body
+            rm -f /tmp/response-body
+            ready=0
+            for attempt in $(seq 1 20); do
+              if curl --connect-timeout 2 --max-time 8 --fail --silent --show-error "http://127.0.0.1:8080$url" -o /tmp/response-body && test -s /tmp/response-body; then
+                ready=1
+                break
+              fi
+              sleep 1
+            done
+            if [ "$ready" -ne 1 ]; then
+              docker logs product-analytics-frontend-e2e
+              exit 1
+            fi
             echo "OK $url"
           done
 
