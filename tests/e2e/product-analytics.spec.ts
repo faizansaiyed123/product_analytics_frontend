@@ -80,7 +80,7 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   const overviewBody = await overviewRefresh.json();
   expect(overviewBody.kpis.total_events).toBe(4);
   await expect(page.getByTestId("kpi-Total events")).toHaveText("4");
-  await capture(page, "05-overview.png");
+  await saveShot(page, "05-overview.png");
 
   const queryWait = page.waitForResponse(r => r.url().includes("/api/v1/analytics/query") && r.request().method() === "POST");
   await page.goto(base + "/insights/trends");
