@@ -96,7 +96,8 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   expect((await dashboardWait).status()).toBe(201);
   await expect(page.getByRole("heading", { name: names.dashboard })).toBeVisible();
   await page.getByRole("button", { name: "Add widget" }).click();
-  await page.getByRole("dialog").getByLabel("Report").selectOption({ label: names.report + " (trend)" });
+  await page.getByRole("dialog").getByLabel("Report", { selector: "button" }).click();
+  await page.getByRole("option", { name: names.report + " (trend)" }).click();
   await page.getByRole("button", { name: "Add to dashboard" }).click();
   const patchWait = page.waitForResponse(r => r.url().includes("/api/v1/dashboards/") && r.request().method() === "PATCH");
   await page.getByRole("button", { name: "Save dashboard" }).click();
