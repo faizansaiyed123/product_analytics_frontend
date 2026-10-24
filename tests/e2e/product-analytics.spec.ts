@@ -112,6 +112,18 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   expect((await alertWait).status()).toBe(201);
   await expect(page.getByText(names.alert)).toBeVisible();
 
+  // Queue a background export in the UI; the worker consumes it and the browser downloads its real CSV output.
+  await page.goto(base + "/settings/data");
+  const exportWait = page.waitForResponse(r => r.url().endsWith("/api/v1/export/jobs") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Queue events export (90 days)" }).click();
+  expect((await exportWait).status()).toBe(202);
+  await expect(page.getByText("done", { exact: true })).toBeVisible({ timeout: 60000 });
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("link", { name: /Download/ }).click(),
+  ]);
+  expect(await download.suggestedFilename()).toBe("events.csv");
+
   const routes: Array<[string, string]> = [
     ["/", "05-overview.png"], ["/insights/trends", "06-trends-data.png"], ["/insights/funnels", "07-funnels.png"],
     ["/insights/retention", "08-retention.png"], ["/insights/paths", "09-journeys.png"], ["/insights/cohorts", "10-cohorts.png"],
