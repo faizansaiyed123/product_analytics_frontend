@@ -190,6 +190,39 @@ The verification page calls the real token-confirmation endpoint and displays th
 
 After signing out, the previous credential is rejected and the new credential successfully starts a fresh session.
 
+
+### Event detail, user detail and right-to-erasure
+
+![Event detail and properties](visuals/29-event-detail.png)
+
+The secondary browser journey opens a persisted event, checks its properties and follows the event's person link to the resolved profile.
+
+![User detail and timeline](visuals/30-user-detail.png)
+
+The user page shows the profile and event timeline. The test then uses the real destructive-action confirmation to erase the person and associated event rows.
+
+![Erased person result](visuals/34-person-erasure-result.png)
+
+The browser verifies the successful delete response, confirmation message and return to the user list. A database assertion in the updated CI workflow checks that the erased distinct-ID mapping and event rows are both absent.
+
+### API-key rotation
+
+![Rotated API key, with secret redacted](visuals/31-key-rotation.png)
+
+Rotation is performed in the UI. The test verifies that the previous secret receives HTTP 401, while the newly revealed secret can ingest an event. The plaintext key is redacted before the screenshot is saved.
+
+### Alert notifications and read state
+
+![Firing alert notification](visuals/32-alert-notification.png)
+
+The test evaluates an alert against the actual ingested probe event, opens the notification bell, and marks the notification read. The updated workflow additionally queries PostgreSQL to verify the notification has a non-null `read_at`.
+
+### Team invitation lifecycle
+
+![Viewer invitation in team settings](visuals/33-team-invitations.png)
+
+A viewer invitation is created and then revoked through the UI. The updated workflow checks that no pending invitation remains for that email in PostgreSQL.
+
 ## 7. API and database evidence checklist
 
 | Area | Evidence required | Verified automated coverage |
@@ -197,21 +230,21 @@ After signing out, the previous credential is rejected and the new credential su
 | Registration, login and logout | Live status, session cookies, invalid credentials rejected, logout and new-session login | Browser E2E plus backend auth/session/CSRF/rate-limit tests |
 | Password change and recovery | Current password validation, other-session revocation, reset request, invalid reset token and invalid email-verification token | Browser E2E plus backend auth tests |
 | Project and settings | Project creation/rename, retention setting and setting persistence | Browser UI/API actions plus direct PostgreSQL assertions |
-| API keys | Create, one-time plaintext reveal, revoke, stored hash and permissions | Browser UI/API actions plus SQL assertions; backend rotation/grace/permission tests |
+| API keys | Create, one-time plaintext reveal, revoke, rotation, old key rejection and new key ingestion | Browser UI/API actions; PostgreSQL rotation-state assertion in the updated workflow; backend grace/permission tests |
 | Event ingestion | API-key authentication, four accepted events and persisted event/person/definition rows | Browser POST plus direct SQL assertions; backend ingestion suite |
 | Overview freshness | Forced refresh after ingestion renders four stored events | Browser assertion against the real overview endpoint; refresh action added for stale cached results |
 | Trends, funnels, retention and journeys | Structured query inputs and analytics results | Browser route/network checks plus database-backed analytics tests |
-| Events, users and sessions | Explorer list/detail/timeline and session calculations | Browser route sweep plus backend explorer/session tests |
+| Events, users and sessions | Explorer list, event detail, user profile/timeline and session calculations | Browser route sweep + secondary E2E detail journey + backend explorer/session tests |
 | Cohorts | Preview count, create and persisted definition | Browser preview/create plus direct SQL assertion; backend criteria/filter tests |
 | Reports | Save from a real analytics query and persist the report | Browser request plus SQL assertion; backend CRUD/duplicate/ownership tests |
 | Dashboards | Create, add saved-report widget and persist layout PATCH | Browser requests plus SQL assertion; backend layout validation tests |
-| Alerts and notifications | Create, evaluate and store alert; notification state/logic | Browser create/evaluate plus SQL assertion; backend evaluation/notification/webhook tests |
+| Alerts and notifications | Create/evaluate, show notification, mark read and persist read state | Browser E2E + PostgreSQL notification read-state assertion in the updated workflow + backend evaluation/notification/webhook tests |
 | Export | Direct CSV download and queued worker export/download | Browser download events plus SQL assertion for completed export job; backend format/job tests |
-| Destructive/data-management actions | Retention save, purge confirmation guard, person erasure | Browser setting save and negative confirmation guard; backend test verifies person and event rows are deleted |
+| Destructive/data-management actions | Retention save, purge confirmation guard and UI person erasure | Browser UI/API flow + secondary PostgreSQL assertions for person mappings/event rows; backend erasure test also verifies deletion |
 | Operational endpoints | Liveness, readiness and metrics | Backend API suite against migrated PostgreSQL/Redis |
-| Page coverage | Captured screenshots from workspace, settings, login and recovery pages | Playwright screenshots from the running application in the latest green run |
+| Team / invitations | Create and revoke a viewer invitation | Secondary browser journey + PostgreSQL check that the pending invitation is gone |
 | Build/container quality | Frontend tests, lint, TypeScript, production build, Docker and SDK URL checks | GitHub Actions workflow |
-| Database migrations/server regressions | Alembic upgrade and full API suite using real PostgreSQL/Redis | Backend workflow and full-stack workflow |
+| Page coverage | Captured screenshots from workspace, settings, login/recovery, detail and admin lifecycle pages | Playwright screenshots from the running application; latest green browser run |\n| Database migrations/server regressions | Alembic upgrade and full API suite using real PostgreSQL/Redis | Backend workflow and full-stack workflow |
 
 ## 8. Complete registered API route inventory (89 operations)
 
@@ -371,16 +404,16 @@ This is the inventory of active FastAPI routes in the repositories. It documents
 | Retention | Return-period query and heatmap | See workflow results |
 | Journeys / paths | Path query and results | See workflow results |
 | Cohorts | Preview, create, refresh, list, delete | See workflow results |
-| Events | Pagination, filter, detail and export | See workflow results |
-| Users | List, detail and event timeline | See workflow results |
+| Events | Pagination, filters, event detail, export | Route sweep + secondary event-detail browser test; backend explorer tests |
+| Users | List, profile, timeline, and data erasure | Secondary browser journey; backend API/SQL erasure assertions |
 | Sessions | Paginated session results | See workflow results |
 | Reports | Create, update, duplicate, delete, export | See workflow results |
 | Dashboards | Create, edit layout, widgets, duplicate, rename, delete | See workflow results |
 | Project settings | Validation and saved settings | See workflow results |
-| API keys | Create, list, revoke, rotate and permissions | See workflow results |
-| Team / roles | Member invite, role changes, removal and owner safeguards | See workflow results |
-| Alerts / notifications | Create, evaluate, notification read state, webhook validation | See workflow results |
-| Data management | Usage, retention, purge, erasure and exports | See workflow results |
+| API keys | Create/list/revoke/rotate; old secret rejected and new secret works | Both browser journeys; backend rotation tests |
+| Team / roles | Create/revoke viewer invitation; role and owner boundaries | Secondary browser journey + backend organization tests |
+| Alerts / notifications | Evaluate firing alert and mark notification read | Secondary browser journey + backend alert/notification tests |
+| Data management | Usage, retention, purge guard, erasure and exports | Browser settings/export journeys + backend direct-delete test |
 | SDK | Browser ingestion and public SDK static files | Browser ingestion + container path smoke test |
 | Health and readiness | Liveness plus database/Redis readiness | Backend tests + CI service checks |
 | Authorization / CSRF / abuse limits | Forbidden access, CSRF, rate limits, payload validation and boundary cases | Backend regression suite |
