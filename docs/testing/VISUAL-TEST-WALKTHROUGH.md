@@ -24,7 +24,7 @@ The application has two different authentication paths. Product events use a pro
 
 ## Verification status
 
-This walkthrough is backed by the full-stack validation workflow added on the review branch. The browser tests create a disposable test account and project, send test events through the real HTTP ingestion endpoint, exercise the saved-analytics forms in the real frontend, and verify records directly against PostgreSQL. These test records are isolated CI data—not production or customer data.
+This walkthrough is backed by the full-stack validation workflow defined at `.github/workflows/full-stack-e2e.yml`. The browser tests create a disposable test account and project, send test events through the real HTTP ingestion endpoint, exercise the saved-analytics forms in the real frontend, and verify records directly against PostgreSQL. These test records are isolated CI data—not production or customer data.
 
 **Evidence rule:** a screenshot is captured by Playwright from the running application. A workflow run must pass before these images are treated as a verified walkthrough. UI unit tests that use Mock Service Worker are regression tests, not proof of end-to-end persistence.
 
