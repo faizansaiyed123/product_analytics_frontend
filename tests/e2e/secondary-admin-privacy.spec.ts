@@ -119,6 +119,7 @@ test("event details, erasure, key rotation, alerts and team invites", async ({ p
   const newRotationKey = (await rotatedResponse.json()).key as string;
   expect(newRotationKey).toMatch(/^phc_/);
   await expect(page.getByTestId("api-key-value")).toHaveText(newRotationKey);
+  await page.getByTestId("api-key-value").evaluate(node => { node.textContent = "REDACTED"; });
   await saveShot(page, "31-key-rotation.png");
   await page.getByRole("button", { name: "Done" }).click();
 
