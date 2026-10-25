@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http } from "msw";
+import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { AppRoutes } from "@/App";
 import { server } from "./server";
@@ -11,6 +11,14 @@ describe("authentication UI", () => {
     signedOut();
     renderApp(<AppRoutes />, "/events");
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+  });
+
+  it("keeps the authentication UI available when the backend is not deployed", async () => {
+    server.use(http.get(API("/auth/me"), () => HttpResponse.text("<html>Not found</html>", { status: 404, headers: { "content-type": "text/html" } })));
+    renderApp(<AppRoutes />, "/login");
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent("Frontend preview only.");
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
   });
 
   it("validates the login form before calling the API", async () => {
