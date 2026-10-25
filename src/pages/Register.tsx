@@ -12,7 +12,7 @@ export const passwordProblem = (pw: string): string | null =>
   pw.length < 10 ? "Use at least 10 characters" : pw.toLowerCase() === pw || pw.toUpperCase() === pw || !/\d/.test(pw) ? "Mix upper and lower case letters and include a digit" : null;
 
 export function RegisterPage() {
-  const { me, setMe, backendUnavailable } = useAuth();
+  const { me, setMe } = useAuth();
   const nav = useNavigate();
   const [f, setF] = useState({ name: "", email: "", password: "", organization_name: "" });
   const [touched, setTouched] = useState(false);
@@ -24,7 +24,7 @@ export function RegisterPage() {
     org: touched && !f.organization_name.trim() ? "Give your workspace a name" : null,
   };
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-  const submit = (e: FormEvent) => { e.preventDefault(); if (backendUnavailable) return; setTouched(true); if (/^\S+@\S+\.\S+$/.test(f.email) && !passwordProblem(f.password) && f.organization_name.trim()) m.mutate(); };
+  const submit = (e: FormEvent) => { e.preventDefault(); setTouched(true); if (/^\S+@\S+\.\S+$/.test(f.email) && !passwordProblem(f.password) && f.organization_name.trim()) m.mutate(); };
   return (
     <AuthLayout title="Create your account" subtitle="Self-hosted. Your data never leaves your server." footer={<>Already have an account? <Link className="text-primary hover:underline" to="/login">Sign in</Link></>}>
       <form onSubmit={submit} className="space-y-4" noValidate>
@@ -33,7 +33,7 @@ export function RegisterPage() {
         <Field label="Password" hint="At least 10 characters, with upper and lower case letters and a digit." error={errs.password}>{(id) => <Input id={id} type="password" autoComplete="new-password" value={f.password} onChange={set("password")} aria-invalid={!!errs.password} />}</Field>
         <Field label="Workspace name" error={errs.org}>{(id) => <Input id={id} value={f.organization_name} onChange={set("organization_name")} placeholder="Acme Inc." aria-invalid={!!errs.org} />}</Field>
         {m.isError && <p role="alert" className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{messageFor(m.error)}</p>}
-        <Button type="submit" variant="primary" className="w-full" loading={m.isPending} disabled={backendUnavailable}>Create account</Button>
+        <Button type="submit" variant="primary" className="w-full" loading={m.isPending}>Create account</Button>
       </form>
     </AuthLayout>
   );

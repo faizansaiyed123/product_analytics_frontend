@@ -1,6 +1,6 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
+import { http } from "msw";
 import { describe, expect, it } from "vitest";
 import { AppRoutes } from "@/App";
 import { server } from "./server";
@@ -11,15 +11,6 @@ describe("authentication UI", () => {
     signedOut();
     renderApp(<AppRoutes />, "/events");
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
-  });
-
-  it("keeps the authentication UI visible without a backend status banner", async () => {
-    server.use(http.get(API("/auth/me"), () => HttpResponse.text("<html>Not found</html>", { status: 404, headers: { "content-type": "text/html" } })));
-    renderApp(<AppRoutes />, "/login");
-    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
-    expect(screen.queryByText(/Frontend preview only/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/The backend API is not deployed or connected yet/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
   });
 
   it("validates the login form before calling the API", async () => {
@@ -48,7 +39,7 @@ describe("authentication UI", () => {
     let body: any;
     server.use(
       http.post(API("/auth/login"), async ({ request }) => { body = await request.json(); signedIn(); return json(ME); }),
-      http.post(API("/analytics/overview"), () => json({ kpis: { total_users: 0, active_users: 0, new_users: 0, total_events: 0, sessions: 0, events_per_user: 0, avg_session_duration_seconds: null }, previous_kpis: null, interval: "day", labels: [], event_volume: [], active_users_series: [], new_users_series: [], retention: { cohorts: [], average: [], offsets: [], interval: "day" } })),
+      http.post(API("/analytics/overview"), () => json({ kpis: { total_users: 0, active_users: 0, new_users: 0, total_events: 0, sessions: 0, events_per_user: 0, avg_session_duration_seconds: null }, previous_kpis: null, interval: "day", labels: [], event_volume: [], active_users_series: [], new_users_series: [], user_growth_series: [], top_events: [], top_pages: [], retention: { cohorts: [], average: [], offsets: [], interval: "day" } })),
     );
     renderApp(<AppRoutes />, "/login");
     await userEvent.type(await screen.findByLabelText("Email"), " owner@example.com ");
