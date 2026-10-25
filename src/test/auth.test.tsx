@@ -13,11 +13,12 @@ describe("authentication UI", () => {
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 
-  it("keeps the authentication UI available when the backend is not deployed", async () => {
+  it("keeps the authentication UI visible without a backend status banner", async () => {
     server.use(http.get(API("/auth/me"), () => HttpResponse.text("<html>Not found</html>", { status: 404, headers: { "content-type": "text/html" } })));
     renderApp(<AppRoutes />, "/login");
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
-    expect(await screen.findByRole("status")).toHaveTextContent("Frontend preview only.");
+    expect(screen.queryByText(/Frontend preview only/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/The backend API is not deployed or connected yet/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
   });
 
@@ -47,7 +48,7 @@ describe("authentication UI", () => {
     let body: any;
     server.use(
       http.post(API("/auth/login"), async ({ request }) => { body = await request.json(); signedIn(); return json(ME); }),
-      http.post(API("/analytics/overview"), () => json({ kpis: { total_users: 0, active_users: 0, new_users: 0, total_events: 0, sessions: 0, events_per_user: 0, avg_session_duration_seconds: null }, previous_kpis: null, interval: "day", labels: [], event_volume: [], active_users_series: [], new_users_series: [], user_growth_series: [], top_events: [], top_pages: [], retention: { cohorts: [], average: [], offsets: [], interval: "day" } })),
+      http.post(API("/analytics/overview"), () => json({ kpis: { total_users: 0, active_users: 0, new_users: 0, total_events: 0, sessions: 0, events_per_user: 0, avg_session_duration_seconds: null }, previous_kpis: null, interval: "day", labels: [], event_volume: [], active_users_series: [], new_users_series: [], retention: { cohorts: [], average: [], offsets: [], interval: "day" } })),
     );
     renderApp(<AppRoutes />, "/login");
     await userEvent.type(await screen.findByLabelText("Email"), " owner@example.com ");
