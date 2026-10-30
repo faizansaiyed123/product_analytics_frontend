@@ -45,7 +45,7 @@ describe("authentication UI", () => {
     await userEvent.type(await screen.findByLabelText("Email address"), " owner@example.com ");
     await userEvent.type(screen.getByLabelText("Password"), "Sup3rSecretPass");
     await userEvent.click(screen.getByRole("button", { name: "Sign in to workspace" }));
-    expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Understand what moves your product." })).toBeInTheDocument();
     expect(body).toEqual({ email: "owner@example.com", password: "Sup3rSecretPass" });
   });
 
