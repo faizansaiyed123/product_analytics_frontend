@@ -24,7 +24,7 @@ describe("end-to-end user workflow (mocked API)", () => {
     );
     void meNoOrg;
     renderApp(<AppRoutes />, "/register");
-    await userEvent.type(await screen.findByLabelText("Email address"), "owner@example.com");
+    await userEvent.type(await screen.findByLabelText("Email"), "owner@example.com");
     await userEvent.type(screen.getByLabelText("Password"), "Sup3rSecretPass");
     await userEvent.type(screen.getByLabelText("Workspace name"), "Acme");
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
