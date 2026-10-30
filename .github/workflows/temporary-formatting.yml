@@ -1,9 +1,9 @@
 name: Temporary formatting pass
 
 on:
-  push:
+  pull_request:
     branches:
-      - refactor/readability-formatting-only
+      - main
 
 permissions:
   contents: write
