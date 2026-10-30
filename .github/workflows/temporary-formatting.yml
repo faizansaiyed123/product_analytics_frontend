@@ -42,6 +42,6 @@ jobs:
             exit 0
           fi
           git commit -m "refactor: format frontend source"
-          git push
+          git push origin HEAD:refactor/readability-formatting-only
 
 # Trigger formatting on the current PR head.
