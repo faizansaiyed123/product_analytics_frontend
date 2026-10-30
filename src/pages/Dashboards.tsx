@@ -48,17 +48,23 @@ import { useUI } from "@/stores/ui";
 import { can } from "@/types";
 import type {
   AnalyticsQuery,
-  AnalyticsResult,
   ChartType,
   Dashboard,
   DateRange,
   FunnelResult,
   Report,
   RetentionResult,
+  SessionsResult,
   TrendQuery,
   TrendResult,
   Widget,
 } from "@/types";
+
+type AnalyticsResult =
+  | TrendResult
+  | FunnelResult
+  | RetentionResult
+  | SessionsResult;
 import { fmtNum, relativeTime } from "@/utils/format";
 
 const WIDGET_WIDTHS: [string, number][] = [
