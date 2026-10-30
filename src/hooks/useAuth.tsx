@@ -4,25 +4,52 @@ import { ApiError, onUnauthorized } from "@/services/api";
 import { authApi } from "@/services/endpoints";
 import type { Me } from "@/types";
 
-interface AuthCtx { me: Me | null; loading: boolean; setMe: (m: Me | null) => void; logout: () => Promise<void> }
+interface AuthCtx {
+  me: Me | null;
+  loading: boolean;
+  setMe: (m: Me | null) => void;
+  logout: () => Promise<void>;
+}
 const Ctx = createContext<AuthCtx | null>(null);
 export const ME_KEY = ["me"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const q = useQuery({
-    queryKey: ME_KEY, queryFn: authApi.me, retry: false, staleTime: 5 * 60_000,
+    queryKey: ME_KEY,
+    queryFn: authApi.me,
+    retry: false,
+    staleTime: 5 * 60_000,
     throwOnError: false,
   });
-  useEffect(() => onUnauthorized(() => { qc.setQueryData(ME_KEY, null); qc.removeQueries({ predicate: (qq) => qq.queryKey[0] !== "me" }); }), [qc]);
+  useEffect(
+    () =>
+      onUnauthorized(() => {
+        qc.setQueryData(ME_KEY, null);
+        qc.removeQueries({ predicate: (qq) => qq.queryKey[0] !== "me" });
+      }),
+    [qc],
+  );
   const me = q.data ?? null;
   const value: AuthCtx = {
-    me, loading: q.isLoading,
+    me,
+    loading: q.isLoading,
     setMe: (m) => qc.setQueryData(ME_KEY, m),
-    logout: async () => { try { await authApi.logout(); } finally { qc.setQueryData(ME_KEY, null); qc.removeQueries({ predicate: (query) => query.queryKey[0] !== ME_KEY[0] }); } },
+    logout: async () => {
+      try {
+        await authApi.logout();
+      } finally {
+        qc.setQueryData(ME_KEY, null);
+        qc.removeQueries({ predicate: (query) => query.queryKey[0] !== ME_KEY[0] });
+      }
+    },
   };
   if (q.error && !(q.error instanceof ApiError && q.error.status === 401)) {
-    return <div role="alert" className="p-8 text-center text-sm">Cannot reach the API. Is the backend running?</div>;
+    return (
+      <div role="alert" className="p-8 text-center text-sm">
+        Cannot reach the API. Is the backend running?
+      </div>
+    );
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

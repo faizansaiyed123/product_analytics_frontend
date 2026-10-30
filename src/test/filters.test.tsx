@@ -13,7 +13,14 @@ function Harness() {
   latest = f;
   return <FilterBuilder projectId="p1" filters={f} onChange={setF} />;
 }
-const setup = () => { signedIn(); return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><Harness /></QueryClientProvider>); };
+const setup = () => {
+  signedIn();
+  return render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <Harness />
+    </QueryClientProvider>,
+  );
+};
 
 describe("FilterBuilder", () => {
   it("builds a structured filter without any SQL", async () => {

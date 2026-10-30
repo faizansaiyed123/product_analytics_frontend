@@ -21,7 +21,12 @@ import { UserDetailPage, UsersPage } from "@/pages/Users";
 function Protected({ children }: { children: React.ReactNode }) {
   const { me, loading } = useAuth();
   const loc = useLocation();
-  if (loading) return <div className="p-10"><LoadingBlock label="Loading" /></div>;
+  if (loading)
+    return (
+      <div className="p-10">
+        <LoadingBlock label="Loading" />
+      </div>
+    );
   if (!me) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />;
   return <>{children}</>;
 }
@@ -34,7 +39,13 @@ export function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route element={<Protected><WorkspaceLayout /></Protected>}>
+      <Route
+        element={
+          <Protected>
+            <WorkspaceLayout />
+          </Protected>
+        }
+      >
         <Route index element={<OverviewPage />} />
         <Route path="insights/trends" element={<TrendsPage />} />
         <Route path="insights/funnels" element={<FunnelsPage />} />

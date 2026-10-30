@@ -20,12 +20,22 @@ const variants = cva(
   },
 );
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof variants> { loading?: boolean }
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof variants> {
+  loading?: boolean;
+}
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, loading, children, disabled, type = "button", ...props }, ref) => (
-  <button ref={ref} type={type} className={cn(variants({ variant, size }), className)} disabled={disabled || loading} {...props}>
-    {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-    {children}
-  </button>
-));
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, loading, children, disabled, type = "button", ...props }, ref) => (
+    <button
+      ref={ref}
+      type={type}
+      className={cn(variants({ variant, size }), className)}
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+      {children}
+    </button>
+  ),
+);
 Button.displayName = "Button";

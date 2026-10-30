@@ -1,12 +1,18 @@
 import type { Filter, Operator, PropertyFilter } from "@/types";
 
 export const OPERATORS: { value: Operator; label: string; needsValue: boolean; numeric?: boolean; list?: boolean }[] = [
-  { value: "equals", label: "is", needsValue: true }, { value: "not_equals", label: "is not", needsValue: true },
-  { value: "contains", label: "contains", needsValue: true }, { value: "not_contains", label: "does not contain", needsValue: true },
-  { value: "gt", label: ">", needsValue: true, numeric: true }, { value: "gte", label: "≥", needsValue: true, numeric: true },
-  { value: "lt", label: "<", needsValue: true, numeric: true }, { value: "lte", label: "≤", needsValue: true, numeric: true },
-  { value: "in", label: "is one of", needsValue: true, list: true }, { value: "not_in", label: "is none of", needsValue: true, list: true },
-  { value: "is_set", label: "is set", needsValue: false }, { value: "is_not_set", label: "is not set", needsValue: false },
+  { value: "equals", label: "is", needsValue: true },
+  { value: "not_equals", label: "is not", needsValue: true },
+  { value: "contains", label: "contains", needsValue: true },
+  { value: "not_contains", label: "does not contain", needsValue: true },
+  { value: "gt", label: ">", needsValue: true, numeric: true },
+  { value: "gte", label: "≥", needsValue: true, numeric: true },
+  { value: "lt", label: "<", needsValue: true, numeric: true },
+  { value: "lte", label: "≤", needsValue: true, numeric: true },
+  { value: "in", label: "is one of", needsValue: true, list: true },
+  { value: "not_in", label: "is none of", needsValue: true, list: true },
+  { value: "is_set", label: "is set", needsValue: false },
+  { value: "is_not_set", label: "is not set", needsValue: false },
 ];
 export const opMeta = (op: Operator) => OPERATORS.find((o) => o.value === op)!;
 
@@ -14,7 +20,11 @@ export const opMeta = (op: Operator) => OPERATORS.find((o) => o.value === op)!;
 export function coerceValue(op: Operator, raw: string): unknown {
   const meta = opMeta(op);
   if (!meta.needsValue) return undefined;
-  if (meta.list) return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (meta.list)
+    return raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   if (meta.numeric) return raw.trim() === "" ? raw : Number(raw);
   return raw;
 }
@@ -39,4 +49,9 @@ export function describeFilter(f: Filter): string {
   return `${f.property} ${m.label}${m.needsValue ? " " + v : ""}`;
 }
 
-export const newFilter = (type: PropertyFilter["type"] = "event"): PropertyFilter => ({ type, property: "", operator: "equals", value: "" });
+export const newFilter = (type: PropertyFilter["type"] = "event"): PropertyFilter => ({
+  type,
+  property: "",
+  operator: "equals",
+  value: "",
+});
