@@ -184,7 +184,7 @@ export function PathsPage() {
                     return (
                       <section
                         key={step}
-                        aria-label={\`Step \${step} to \${step + 1}\`}
+                        aria-label={`Step ${step} to ${step + 1}`}
                       >
                         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           Step {step} → {step + 1}
@@ -195,14 +195,14 @@ export function PathsPage() {
                             .slice(0, 8)
                             .map((edge) => (
                               <li
-                                key={\`\${edge.source}>\${edge.target}\`}
+                                key={`${edge.source}>${edge.target}`}
                                 className="grid grid-cols-[1fr_auto] items-center gap-3"
                               >
                                 <div className="relative overflow-hidden rounded bg-muted px-2 py-1 text-sm">
                                   <div
                                     className="absolute inset-y-0 left-0 bg-primary/20"
                                     style={{
-                                      width: \`\${(edge.count / maxCount) * 100}%\`,
+                                      width: `${(edge.count / maxCount) * 100}%`,
                                     }}
                                   />
 

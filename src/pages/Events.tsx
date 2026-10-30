@@ -97,7 +97,7 @@ export function EventDetail({
             <p>
               <Link
                 className="text-primary hover:underline"
-                to={\`/users/\${event.person_id}\`}
+                to={`/users/${event.person_id}`}
               >
                 {event.distinct_id}
               </Link>
@@ -339,7 +339,7 @@ export function EventsPage() {
                     key={event.id}
                     tabIndex={0}
                     role="button"
-                    aria-label={\`Inspect \${event.event} event\`}
+                    aria-label={`Inspect ${event.event} event`}
                     className="cursor-pointer hover:bg-muted/60 focus-visible:bg-muted"
                     onClick={() =>
                       setSelectedEventId(event.id)

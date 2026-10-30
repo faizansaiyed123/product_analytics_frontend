@@ -80,7 +80,7 @@ function Kpi({
           </div>
           <div
             className="mt-3 text-2xl font-semibold tracking-tight tabular sm:text-3xl"
-            data-testid={\`kpi-\${label}\`}
+            data-testid={`kpi-${label}`}
           >
             {format(value)}
           </div>
@@ -180,7 +180,7 @@ function MiniSeries({
     <div
       className="h-56 sm:h-64"
       role="img"
-      aria-label={\`\${name} over time\`}
+      aria-label={`${name} over time`}
     >
       <ResponsiveContainer width="100%" height="100%">
         {kind === "bar" ? (
@@ -281,7 +281,7 @@ function OverviewHero({
             (x) => (
               <path
                 key={x}
-                d={\`M\${x} 0V220\`}
+                d={`M${x} 0V220`}
                 stroke="#C4B5FD"
                 strokeOpacity=".16"
                 strokeDasharray="3 7"
@@ -423,7 +423,7 @@ function RetentionCard({ overview }: { overview: Overview }) {
     <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
       <CardHeader
         title="Retention overview"
-        description={\`Daily retention of people first seen in this period · avg session \${fmtDuration(overview.kpis.avg_session_duration_seconds)}\`}
+        description={`Daily retention of people first seen in this period · avg session ${fmtDuration(overview.kpis.avg_session_duration_seconds)}`}
         actions={
           <Link
             to="/insights/retention"

@@ -211,7 +211,7 @@ export function FilterBuilder({
       <datalist id={propertiesListId}>
         {(eventProperties ?? []).map((property) => (
           <option
-            key={\`\${property.kind}:\${property.name}\`}
+            key={`${property.kind}:${property.name}`}
             value={property.name}
           >
             {property.kind}

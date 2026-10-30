@@ -104,7 +104,7 @@ function EventSeriesRow({
           projectId={projectId}
           value={event}
           allowAll
-          label={\`Event \${index + 1}\`}
+          label={`Event ${index + 1}`}
           onChange={(value) =>
             onChange(index, value)
           }
@@ -115,7 +115,7 @@ function EventSeriesRow({
         <Button
           variant="ghost"
           size="icon"
-          aria-label={\`Remove event \${index + 1}\`}
+          aria-label={`Remove event ${index + 1}`}
           onClick={() => onRemove(index)}
         >
           <X className="h-4 w-4" />

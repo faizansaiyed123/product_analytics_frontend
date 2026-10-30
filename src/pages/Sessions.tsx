@@ -99,7 +99,7 @@ export function SessionsPage() {
     <>
       <PageHeader
         title="Sessions"
-        description={\`A new session starts after \${project.settings.session_timeout_minutes} minutes of inactivity (configurable in project settings).\`}
+        description={`A new session starts after ${project.settings.session_timeout_minutes} minutes of inactivity (configurable in project settings).`}
       />
 
       <Card className="mb-5">
@@ -263,7 +263,7 @@ export function SessionsPage() {
                 {sessions.map(
                   (session, index) => (
                     <tr
-                      key={\`\${session.person_id}-\${session.start}-\${index}\`}
+                      key={`${session.person_id}-${session.start}-${index}`}
                     >
                       <Td className="whitespace-nowrap text-xs">
                         {fmtDateTime(
@@ -274,7 +274,7 @@ export function SessionsPage() {
                       <Td>
                         <Link
                           className="font-mono text-xs text-primary hover:underline"
-                          to={\`/users/\${session.person_id}\`}
+                          to={`/users/${session.person_id}`}
                         >
                           {session.distinct_id}
                         </Link>

@@ -182,7 +182,7 @@ export function UsersPage() {
                       <Td>
                         <Link
                           className="font-medium text-primary hover:underline"
-                          to={\`/users/\${user.id}\`}
+                          to={`/users/${user.id}`}
                         >
                           {displayName}
                         </Link>

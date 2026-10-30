@@ -142,7 +142,7 @@ function Notifications({ projectId }: { projectId: string }) {
         <Button
           variant="ghost"
           size="icon"
-          aria-label={\`Notifications\${unread ? \`, \${unread} unread\` : ""}\`}
+          aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
           className="relative"
         >
           <Bell className="h-4 w-4" />
@@ -306,7 +306,7 @@ function ProjectMenu({
     <Menu
       align="start"
       trigger={
-        <Button aria-label={\`Project: \${project.name}\`}>
+        <Button aria-label={`Project: ${project.name}`}>
           <span className="max-w-[10rem] truncate">
             {project.name}
           </span>

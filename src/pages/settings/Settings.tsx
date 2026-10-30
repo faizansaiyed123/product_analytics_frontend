@@ -40,7 +40,7 @@ function SettingsShell() {
         {TABS.map(([to, label]) => (
           <NavLink
             key={to}
-            to={\`/settings/\${to}\`}
+            to={`/settings/${to}`}
             className={({ isActive }) =>
               cn(
                 "-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm",

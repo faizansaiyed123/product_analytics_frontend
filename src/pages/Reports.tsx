@@ -41,7 +41,7 @@ export const reportPath = (report: Report) => {
       report.query.type as keyof typeof paths
     ] ?? "trends";
 
-  return \`/insights/\${path}?report=\${report.id}\`;
+  return `/insights/${path}?report=${report.id}`;
 };
 
 export function ReportsPage() {
@@ -174,7 +174,7 @@ export function ReportsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          aria-label={\`Duplicate \${report.name}\`}
+                          aria-label={`Duplicate ${report.name}`}
                           onClick={() =>
                             duplicateReport.mutate(
                               report,
@@ -223,7 +223,7 @@ export function ReportsPage() {
             removeReport.mutate(deleteTarget);
           }
         }}
-        description={\`“\${deleteTarget?.name}” will be deleted. Dashboard widgets that use it must be removed first.\`}
+        description={`“${deleteTarget?.name}” will be deleted. Dashboard widgets that use it must be removed first.`}
       />
     </>
   );

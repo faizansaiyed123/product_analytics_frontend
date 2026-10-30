@@ -102,12 +102,12 @@ export const orgApi = {
 
   members: (id: string) =>
     api<Member[]>(
-      \`/organizations/\${id}/members\`,
+      `/organizations/${id}/members`,
     ),
 
   invitations: (id: string) =>
     api<Invitation[]>(
-      \`/organizations/\${id}/invitations\`,
+      `/organizations/${id}/invitations`,
     ),
 
   addMember: (
@@ -116,7 +116,7 @@ export const orgApi = {
     role: string,
   ) =>
     api<{ status: "added" | "invited" }>(
-      \`/organizations/\${id}/members\`,
+      `/organizations/${id}/members`,
       {
         method: "POST",
         body: { email, role },
@@ -129,7 +129,7 @@ export const orgApi = {
     role: string,
   ) =>
     api(
-      \`/organizations/\${id}/members/\${userId}\`,
+      `/organizations/${id}/members/${userId}`,
       {
         method: "PATCH",
         body: { role },
@@ -138,7 +138,7 @@ export const orgApi = {
 
   remove: (id: string, userId: string) =>
     api(
-      \`/organizations/\${id}/members/\${userId}\`,
+      `/organizations/${id}/members/${userId}`,
       {
         method: "DELETE",
       },
@@ -149,7 +149,7 @@ export const orgApi = {
     inviteId: string,
   ) =>
     api(
-      \`/organizations/\${id}/invitations/\${inviteId}\`,
+      `/organizations/${id}/invitations/${inviteId}`,
       {
         method: "DELETE",
       },
@@ -157,7 +157,7 @@ export const orgApi = {
 
   audit: (id: string) =>
     api<AuditLog[]>(
-      \`/organizations/\${id}/audit-logs\`,
+      `/organizations/${id}/audit-logs`,
       {
         params: { limit: 100 },
       },
@@ -185,19 +185,19 @@ export const projectApi = {
       };
     },
   ) =>
-    api<Project>(\`/projects/\${id}\`, {
+    api<Project>(`/projects/${id}`, {
       method: "PATCH",
       body,
     }),
 
   remove: (id: string) =>
-    api(\`/projects/\${id}\`, {
+    api(`/projects/${id}`, {
       method: "DELETE",
     }),
 
   keys: (id: string) =>
     api<ApiKey[]>(
-      \`/projects/\${id}/api-keys\`,
+      `/projects/${id}/api-keys`,
     ),
 
   createKey: (
@@ -205,7 +205,7 @@ export const projectApi = {
     name: string,
   ) =>
     api<ApiKeyCreated>(
-      \`/projects/\${id}/api-keys\`,
+      `/projects/${id}/api-keys`,
       {
         method: "POST",
         body: { name },
@@ -217,7 +217,7 @@ export const projectApi = {
     keyId: string,
   ) =>
     api<ApiKey>(
-      \`/projects/\${id}/api-keys/\${keyId}\`,
+      `/projects/${id}/api-keys/${keyId}`,
       {
         method: "DELETE",
       },
@@ -229,7 +229,7 @@ export const projectApi = {
     grace_period_hours = 0,
   ) =>
     api<ApiKeyCreated>(
-      \`/projects/\${id}/api-keys/\${keyId}/rotate\`,
+      `/projects/${id}/api-keys/${keyId}/rotate`,
       {
         method: "POST",
         body: { grace_period_hours },
@@ -237,7 +237,7 @@ export const projectApi = {
     ),
 
   usage: (id: string, days = 30) =>
-    api<Usage>(\`/projects/\${id}/usage\`, {
+    api<Usage>(`/projects/${id}/usage`, {
       params: { days },
     }),
 
@@ -245,7 +245,7 @@ export const projectApi = {
     id: string,
     confirm_name: string,
   ) =>
-    api(\`/projects/\${id}/data/purge\`, {
+    api(`/projects/${id}/data/purge`, {
       method: "POST",
       body: { confirm_name },
     }),
@@ -255,7 +255,7 @@ export const projectApi = {
     personId: string,
   ) =>
     api(
-      \`/projects/\${id}/persons/\${personId}\`,
+      `/projects/${id}/persons/${personId}`,
       {
         method: "DELETE",
       },
@@ -325,7 +325,7 @@ export const exploreApi = {
     project_id: string,
     id: string,
   ) =>
-    api<EventRow>(\`/events/\${id}\`, {
+    api<EventRow>(`/events/${id}`, {
       params: { project_id },
     }),
 
@@ -335,14 +335,14 @@ export const exploreApi = {
     }),
 
   user: (id: string) =>
-    api<PersonRow>(\`/users/\${id}\`),
+    api<PersonRow>(`/users/${id}`),
 
   timeline: (
     id: string,
     params: Record<string, unknown>,
   ) =>
     api<Page<EventRow>>(
-      \`/users/\${id}/events\`,
+      `/users/${id}/events`,
       { params },
     ),
 
@@ -407,7 +407,7 @@ export const savedApi = {
     }),
 
   deleteCohort: (id: string) =>
-    api(\`/cohorts/\${id}\`, {
+    api(`/cohorts/${id}`, {
       method: "DELETE",
     }),
 
@@ -427,7 +427,7 @@ export const savedApi = {
     api<{
       items: PersonRow[];
       total: number;
-    }>(\`/cohorts/\${id}/members\`, {
+    }>(`/cohorts/${id}/members`, {
       params: { limit: 25 },
     }),
 
@@ -437,7 +437,7 @@ export const savedApi = {
     }),
 
   report: (id: string) =>
-    api<Report>(\`/reports/\${id}\`),
+    api<Report>(`/reports/${id}`),
 
   createReport: (body: {
     project_id: string;
@@ -460,19 +460,19 @@ export const savedApi = {
       visualization: object;
     }>,
   ) =>
-    api<Report>(\`/reports/\${id}\`, {
+    api<Report>(`/reports/${id}`, {
       method: "PATCH",
       body,
     }),
 
   duplicateReport: (id: string) =>
     api<Report>(
-      \`/reports/\${id}/duplicate\`,
+      `/reports/${id}/duplicate`,
       { method: "POST" },
     ),
 
   deleteReport: (id: string) =>
-    api(\`/reports/\${id}\`, {
+    api(`/reports/${id}`, {
       method: "DELETE",
     }),
 
@@ -482,7 +482,7 @@ export const savedApi = {
     }),
 
   dashboard: (id: string) =>
-    api<Dashboard>(\`/dashboards/\${id}\`),
+    api<Dashboard>(`/dashboards/${id}`),
 
   createDashboard: (
     project_id: string,
@@ -504,19 +504,19 @@ export const savedApi = {
       };
     },
   ) =>
-    api<Dashboard>(\`/dashboards/\${id}\`, {
+    api<Dashboard>(`/dashboards/${id}`, {
       method: "PATCH",
       body,
     }),
 
   duplicateDashboard: (id: string) =>
     api<Dashboard>(
-      \`/dashboards/\${id}/duplicate\`,
+      `/dashboards/${id}/duplicate`,
       { method: "POST" },
     ),
 
   deleteDashboard: (id: string) =>
-    api(\`/dashboards/\${id}\`, {
+    api(`/dashboards/${id}`, {
       method: "DELETE",
     }),
 
@@ -532,13 +532,13 @@ export const savedApi = {
     }),
 
   deleteAlert: (id: string) =>
-    api(\`/alerts/\${id}\`, {
+    api(`/alerts/${id}`, {
       method: "DELETE",
     }),
 
   evaluateAlert: (id: string) =>
     api<Alert>(
-      \`/alerts/\${id}/evaluate\`,
+      `/alerts/${id}/evaluate`,
       {
         method: "POST",
       },

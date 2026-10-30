@@ -102,7 +102,7 @@ export function DashboardsPage() {
       setCreating(false);
       setName("");
       navigate(
-        \`/dashboards/\${dashboard.id}\`,
+        `/dashboards/${dashboard.id}`,
       );
     },
     onError: (error) =>
@@ -158,7 +158,7 @@ export function DashboardsPage() {
             (dashboard) => (
               <Link
                 key={dashboard.id}
-                to={\`/dashboards/\${dashboard.id}\`}
+                to={`/dashboards/${dashboard.id}`}
                 className="rounded-lg border border-border bg-card p-4 hover:border-primary/50"
               >
                 <div className="font-medium">
@@ -449,7 +449,7 @@ function WidgetEditorActions({
       />
 
       <Select
-        aria-label={\`Width of \${widgetTitle}\`}
+        aria-label={`Width of ${widgetTitle}`}
         className="h-7 w-24 text-xs"
         value={widget.layout.w}
         onChange={(event) =>
@@ -474,7 +474,7 @@ function WidgetEditorActions({
       </Select>
 
       <Select
-        aria-label={\`Height of \${widgetTitle}\`}
+        aria-label={`Height of ${widgetTitle}`}
         className="h-7 w-24 text-xs"
         value={widget.layout.h}
         onChange={(event) =>
@@ -527,7 +527,7 @@ function WidgetEditorActions({
       <Button
         size="icon"
         variant="ghost"
-        aria-label={\`Remove widget \${widget.title || ""}\`}
+        aria-label={`Remove widget ${widget.title || ""}`}
         onClick={() => onRemove(widget.id)}
       >
         <Trash2 className="h-3.5 w-3.5 text-danger" />
@@ -601,13 +601,13 @@ function DashboardWidget({
           : ""
       }
       style={{
-        gridColumn: \`span \${Math.min(
+        gridColumn: `span ${Math.min(
           widget.layout.w,
           12,
-        )} / span \${Math.min(
+        )} / span ${Math.min(
           widget.layout.w,
           12,
-        )}\`,
+        )}`,
       }}
     >
       <Card className="h-full">
@@ -834,7 +834,7 @@ export function DashboardDetailPage() {
       });
       toast.success("Dashboard duplicated");
       navigate(
-        \`/dashboards/\${dashboard.id}\`,
+        `/dashboards/${dashboard.id}`,
       );
     },
     onError: (error) =>
@@ -1003,7 +1003,7 @@ export function DashboardDetailPage() {
         title={dashboard.name}
         description={
           dashboard.description ||
-          \`\${widgets.length} widgets\`
+          `${widgets.length} widgets`
         }
         actions={
           <>

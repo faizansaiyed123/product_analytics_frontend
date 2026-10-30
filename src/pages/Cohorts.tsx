@@ -548,9 +548,9 @@ function CohortEditor({
               ? previewQuery.isFetching
                 ? "Counting…"
                 : previewQuery.data
-                  ? \`\${fmtNum(
+                  ? `${fmtNum(
                       previewQuery.data.count,
-                    )} matching users\`
+                    )} matching users`
                   : ""
               : "Complete all criteria to preview"}
           </span>
@@ -739,7 +739,7 @@ export function CohortsPage() {
                   <Td className="text-right">
                     <Link
                       className="mr-2 text-sm text-primary hover:underline"
-                      to={\`/users?cohort=\${cohort.id}\`}
+                      to={`/users?cohort=${cohort.id}`}
                     >
                       View users
                     </Link>
@@ -786,7 +786,7 @@ export function CohortsPage() {
             deleteCohort.mutate(deleteTarget);
           }
         }}
-        description={\`“\${deleteTarget?.name}” will be removed. Saved reports that filter by it will stop working.\`}
+        description={`“${deleteTarget?.name}” will be removed. Saved reports that filter by it will stop working.`}
       />
     </>
   );

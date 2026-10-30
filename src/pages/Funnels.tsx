@@ -184,8 +184,8 @@ export function FunnelsPage() {
                   <EventPicker
                     projectId={project.id}
                     value={step}
-                    label={\`Step \${index + 1} event\`}
-                    placeholder={\`Step \${index + 1}\`}
+                    label={`Step ${index + 1} event`}
+                    placeholder={`Step ${index + 1}`}
                     onChange={(value) =>
                       updateStep(index, value)
                     }
@@ -196,7 +196,7 @@ export function FunnelsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={\`Remove step \${index + 1}\`}
+                    aria-label={`Remove step ${index + 1}`}
                     onClick={() =>
                       removeStep(index)
                     }
