@@ -34,7 +34,7 @@ describe("end-to-end user workflow (mocked API)", () => {
     expect(await screen.findByTestId("api-key-value")).toHaveTextContent("phc_abcdef0123456789SECRET");
     expect(screen.getByText(/shown only once/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Continue to workspace" }));
-    expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Understand what moves your product." })).toBeInTheDocument();
     expect(await screen.findByTestId("kpi-Total events")).toHaveTextContent("11");
     expect(screen.getByTestId("kpi-Active users")).toHaveTextContent("3");
     expect(screen.getByText("login")).toBeInTheDocument();
