@@ -43,3 +43,5 @@ jobs:
           fi
           git commit -m "refactor: format frontend source"
           git push
+
+# Trigger formatting on the current PR head.
