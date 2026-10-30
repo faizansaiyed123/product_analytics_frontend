@@ -10,7 +10,7 @@ describe("authentication UI", () => {
   it("redirects anonymous visitors to the login page", async () => {
     signedOut();
     renderApp(<AppRoutes />, "/events");
-    expect(await screen.findByRole("heading", { name: "Sign in to workspace" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Sign in to your workspace" })).toBeInTheDocument();
   });
 
   it("validates the login form before calling the API", async () => {
@@ -18,7 +18,7 @@ describe("authentication UI", () => {
     let called = false;
     server.use(http.post(API("/auth/login"), () => { called = true; return json(ME); }));
     renderApp(<AppRoutes />, "/login");
-    await userEvent.click(await screen.findByRole("button", { name: "Sign in" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Sign in to workspace" }));
     expect(await screen.findByText("Enter a valid email address")).toBeInTheDocument();
     expect(screen.getByText("Enter your password")).toBeInTheDocument();
     expect(called).toBe(false);
@@ -30,7 +30,7 @@ describe("authentication UI", () => {
     renderApp(<AppRoutes />, "/login");
     await userEvent.type(await screen.findByLabelText("Email address"), "a@example.com");
     await userEvent.type(screen.getByLabelText("Password"), "wrong-password");
-    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sign in to workspace" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect email or password.");
   });
 
@@ -44,7 +44,7 @@ describe("authentication UI", () => {
     renderApp(<AppRoutes />, "/login");
     await userEvent.type(await screen.findByLabelText("Email address"), " owner@example.com ");
     await userEvent.type(screen.getByLabelText("Password"), "Sup3rSecretPass");
-    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sign in to workspace" }));
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
     expect(body).toEqual({ email: "owner@example.com", password: "Sup3rSecretPass" });
   });
