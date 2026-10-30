@@ -38,32 +38,122 @@ export function RetentionPage() {
   const [filters, setFilters] = useState<Filter[]>([]);
   const [saveOpen, setSaveOpen] = useState(false);
   const [existing, setExisting] = useState<Report | null>(null);
-  const loaded = useQuery({ queryKey: ["report", reportId], queryFn: () => savedApi.report(reportId!), enabled: !!reportId });
+  const loaded = useQuery({
+    queryKey: ["report", reportId],
+    queryFn: () => savedApi.report(reportId!),
+    enabled: !!reportId,
+  });
   useEffect(() => {
     const r = loaded.data;
-    if (r?.query.type === "retention") { const q = r.query; setExisting(r); setInit(q.initial_event.event); setRet(q.return_event.event); setType(q.cohort_type); setFilters(q.filters);
-      setPreset(Object.entries(PRESETS).find(([, p]) => p.interval === q.interval && JSON.stringify(p.offsets) === JSON.stringify(q.offsets))?.[0] ?? "daily"); }
+    if (r?.query.type === "retention") {
+      const q = r.query;
+      setExisting(r);
+      setInit(q.initial_event.event);
+      setRet(q.return_event.event);
+      setType(q.cohort_type);
+      setFilters(q.filters);
+      setPreset(
+        Object.entries(PRESETS).find(
+          ([, p]) => p.interval === q.interval && JSON.stringify(p.offsets) === JSON.stringify(q.offsets),
+        )?.[0] ?? "daily",
+      );
+    }
   }, [loaded.data]);
   const ready = !!init.trim() && !!ret.trim();
   const p = PRESETS[preset];
-  const query = useMemo<RetentionQuery>(() => ({ type: "retention", initial_event: { event: init }, return_event: { event: ret }, cohort_type: type, interval: p.interval, periods: Math.max(...p.offsets), offsets: p.offsets, date_range, filters: activeFilters(filters), timezone }),
-    [init, ret, type, p, date_range, filters, timezone]);
+  const query = useMemo<RetentionQuery>(
+    () => ({
+      type: "retention",
+      initial_event: { event: init },
+      return_event: { event: ret },
+      cohort_type: type,
+      interval: p.interval,
+      periods: Math.max(...p.offsets),
+      offsets: p.offsets,
+      date_range,
+      filters: activeFilters(filters),
+      timezone,
+    }),
+    [init, ret, type, p, date_range, filters, timezone],
+  );
   const q = useInsight<RetentionResult>(project.id, query, ready);
   return (
     <>
-      <PageHeader title={existing ? existing.name : "Retention"} description="Of the people who start, how many come back?" actions={<><ExportMenu projectId={project.id} query={query} disabled={!ready} /><Button variant="primary" disabled={!ready} onClick={() => setSaveOpen(true)}><Save className="h-4 w-4" />{existing ? "Update report" : "Save as report"}</Button></>} />
-      <Card className="mb-5"><CardBody className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Cohort starts with">{() => <EventPicker projectId={project.id} value={init} allowAll label="Initial event" onChange={setInit} />}</Field>
-          <Field label="Returns by doing">{() => <EventPicker projectId={project.id} value={ret} allowAll label="Return event" onChange={setRet} />}</Field>
-          <Field label="Periods">{(id) => <Select id={id} value={preset} onChange={(e) => setPreset(e.target.value)}>{Object.entries(PRESETS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</Select>}</Field>
-          <Field label="Cohort type" hint={type === "first_time" ? "First ever time they did the initial event" : "Every period they did the initial event"}>{(id) => <Select id={id} value={type} onChange={(e) => setType(e.target.value as typeof type)}><option value="first_time">First time</option><option value="recurring">Recurring</option></Select>}</Field>
-        </div>
-        <FilterBuilder projectId={project.id} filters={filters} onChange={setFilters} />
-      </CardBody></Card>
-      <Card><CardHeader title="Retention by cohort" description="Cohorts are people whose first event falls in the selected date range. “–” means the period has not happened yet." />
-        <CardBody><InsightResult q={q} ready={ready} emptyTitle="No cohorts" isEmpty={(r) => r.cohorts.length === 0}>{(r) => <RetentionHeatmap result={r} interval={r.interval} />}</InsightResult></CardBody></Card>
-      {saveOpen && <SaveReportDialog open={saveOpen} onOpenChange={setSaveOpen} projectId={project.id} query={query} existing={existing} onSaved={setExisting} />}
+      <PageHeader
+        title={existing ? existing.name : "Retention"}
+        description="Of the people who start, how many come back?"
+        actions={
+          <>
+            <ExportMenu projectId={project.id} query={query} disabled={!ready} />
+            <Button variant="primary" disabled={!ready} onClick={() => setSaveOpen(true)}>
+              <Save className="h-4 w-4" />
+              {existing ? "Update report" : "Save as report"}
+            </Button>
+          </>
+        }
+      />
+      <Card className="mb-5">
+        <CardBody className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Cohort starts with">
+              {() => (
+                <EventPicker projectId={project.id} value={init} allowAll label="Initial event" onChange={setInit} />
+              )}
+            </Field>
+            <Field label="Returns by doing">
+              {() => <EventPicker projectId={project.id} value={ret} allowAll label="Return event" onChange={setRet} />}
+            </Field>
+            <Field label="Periods">
+              {(id) => (
+                <Select id={id} value={preset} onChange={(e) => setPreset(e.target.value)}>
+                  {Object.entries(PRESETS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v.label}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+            <Field
+              label="Cohort type"
+              hint={
+                type === "first_time"
+                  ? "First ever time they did the initial event"
+                  : "Every period they did the initial event"
+              }
+            >
+              {(id) => (
+                <Select id={id} value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+                  <option value="first_time">First time</option>
+                  <option value="recurring">Recurring</option>
+                </Select>
+              )}
+            </Field>
+          </div>
+          <FilterBuilder projectId={project.id} filters={filters} onChange={setFilters} />
+        </CardBody>
+      </Card>
+      <Card>
+        <CardHeader
+          title="Retention by cohort"
+          description="Cohorts are people whose first event falls in the selected date range. “–” means the period has not happened yet."
+        />
+        <CardBody>
+          <InsightResult q={q} ready={ready} emptyTitle="No cohorts" isEmpty={(r) => r.cohorts.length === 0}>
+            {(r) => <RetentionHeatmap result={r} interval={r.interval} />}
+          </InsightResult>
+        </CardBody>
+      </Card>
+      {saveOpen && (
+        <SaveReportDialog
+          open={saveOpen}
+          onOpenChange={setSaveOpen}
+          projectId={project.id}
+          query={query}
+          existing={existing}
+          onSaved={setExisting}
+        />
+      )}
     </>
   );
 }

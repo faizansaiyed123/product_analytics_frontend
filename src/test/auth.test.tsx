@@ -16,7 +16,12 @@ describe("authentication UI", () => {
   it("validates the login form before calling the API", async () => {
     signedOut();
     let called = false;
-    server.use(http.post(API("/auth/login"), () => { called = true; return json(ME); }));
+    server.use(
+      http.post(API("/auth/login"), () => {
+        called = true;
+        return json(ME);
+      }),
+    );
     renderApp(<AppRoutes />, "/login");
     await userEvent.click(await screen.findByRole("button", { name: "Sign in" }));
     expect(await screen.findByText("Enter a valid email address")).toBeInTheDocument();
@@ -38,8 +43,34 @@ describe("authentication UI", () => {
     signedOut();
     let body: any;
     server.use(
-      http.post(API("/auth/login"), async ({ request }) => { body = await request.json(); signedIn(); return json(ME); }),
-      http.post(API("/analytics/overview"), () => json({ kpis: { total_users: 0, active_users: 0, new_users: 0, total_events: 0, sessions: 0, events_per_user: 0, avg_session_duration_seconds: null }, previous_kpis: null, interval: "day", labels: [], event_volume: [], active_users_series: [], new_users_series: [], user_growth_series: [], top_events: [], top_pages: [], retention: { cohorts: [], average: [], offsets: [], interval: "day" } })),
+      http.post(API("/auth/login"), async ({ request }) => {
+        body = await request.json();
+        signedIn();
+        return json(ME);
+      }),
+      http.post(API("/analytics/overview"), () =>
+        json({
+          kpis: {
+            total_users: 0,
+            active_users: 0,
+            new_users: 0,
+            total_events: 0,
+            sessions: 0,
+            events_per_user: 0,
+            avg_session_duration_seconds: null,
+          },
+          previous_kpis: null,
+          interval: "day",
+          labels: [],
+          event_volume: [],
+          active_users_series: [],
+          new_users_series: [],
+          user_growth_series: [],
+          top_events: [],
+          top_pages: [],
+          retention: { cohorts: [], average: [], offsets: [], interval: "day" },
+        }),
+      ),
     );
     renderApp(<AppRoutes />, "/login");
     await userEvent.type(await screen.findByLabelText("Email"), " owner@example.com ");
@@ -61,6 +92,8 @@ describe("authentication UI", () => {
     await userEvent.clear(screen.getByLabelText("Password"));
     await userEvent.type(screen.getByLabelText("Password"), "GoodPassw0rdHere");
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("An account with this email already exists."));
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("An account with this email already exists."),
+    );
   });
 });

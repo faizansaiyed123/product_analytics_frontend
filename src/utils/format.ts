@@ -2,8 +2,13 @@ export const nf = new Intl.NumberFormat("en-US");
 export const fmtNum = (n: number | null | undefined, digits = 0) =>
   n === null || n === undefined || Number.isNaN(n) ? "–" : n.toLocaleString("en-US", { maximumFractionDigits: digits });
 export const fmtCompact = (n: number | null | undefined) =>
-  n === null || n === undefined ? "–" : Math.abs(n) >= 10_000 ? Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n) : fmtNum(n, Math.abs(n) < 100 && !Number.isInteger(n) ? 1 : 0);
-export const fmtPct = (r: number | null | undefined, digits = 1) => (r === null || r === undefined ? "–" : `${(r * 100).toFixed(digits)}%`);
+  n === null || n === undefined
+    ? "–"
+    : Math.abs(n) >= 10_000
+      ? Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n)
+      : fmtNum(n, Math.abs(n) < 100 && !Number.isInteger(n) ? 1 : 0);
+export const fmtPct = (r: number | null | undefined, digits = 1) =>
+  r === null || r === undefined ? "–" : `${(r * 100).toFixed(digits)}%`;
 
 export function fmtDuration(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined) return "–";
@@ -21,13 +26,32 @@ export function pctChange(cur: number, prev: number | null | undefined): number 
 }
 
 export function fmtDateTime(iso: string, tz?: string | null): string {
-  return new Date(iso).toLocaleString("en-US", { timeZone: tz || undefined, month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  return new Date(iso).toLocaleString("en-US", {
+    timeZone: tz || undefined,
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 }
 export function fmtDate(iso: string, tz?: string | null): string {
-  return new Date(iso).toLocaleDateString("en-US", { timeZone: tz || undefined, year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString("en-US", {
+    timeZone: tz || undefined,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 export function fmtTime(iso: string, tz?: string | null): string {
-  return new Date(iso).toLocaleTimeString("en-US", { timeZone: tz || undefined, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  return new Date(iso).toLocaleTimeString("en-US", {
+    timeZone: tz || undefined,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 }
 export function relativeTime(iso: string, now = Date.now()): string {
   const d = (now - new Date(iso).getTime()) / 1000;

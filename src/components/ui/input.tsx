@@ -16,16 +16,17 @@ import React, {
 } from "react";
 import { cn } from "@/utils/cn";
 
-const base = "w-full rounded-md border border-border bg-card px-3 text-sm placeholder:text-muted-foreground/70 disabled:opacity-60";
+const base =
+  "w-full rounded-md border border-border bg-card px-3 text-sm placeholder:text-muted-foreground/70 disabled:opacity-60";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...p }, ref) => (
   <input ref={ref} className={cn(base, "h-9", className)} {...p} />
 ));
 Input.displayName = "Input";
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...p }, ref) => (
-  <textarea ref={ref} className={cn(base, "min-h-[72px] py-2", className)} {...p} />
-));
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
+  ({ className, ...p }, ref) => <textarea ref={ref} className={cn(base, "min-h-[72px] py-2", className)} {...p} />,
+);
 Textarea.displayName = "Textarea";
 
 interface ParsedOption {
@@ -64,9 +65,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     useImperativeHandle(ref, () => hiddenSelectRef.current as HTMLSelectElement);
 
     const isControlled = value !== undefined;
-    const [uncontrolledValue, setUncontrolledValue] = useState(
-      defaultValue !== undefined ? String(defaultValue) : ""
-    );
+    const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue !== undefined ? String(defaultValue) : "");
 
     const currentValue = isControlled ? String(value ?? "") : uncontrolledValue;
     const options = extractOptions(children);
@@ -125,7 +124,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             "hover:bg-muted/30 hover:border-muted-foreground/30",
             "focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary",
             open && "border-primary ring-2 ring-primary/30",
-            disabled && "cursor-not-allowed opacity-50 bg-muted/20"
+            disabled && "cursor-not-allowed opacity-50 bg-muted/20",
           )}
         >
           <span className="truncate text-left">
@@ -135,7 +134,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className={cn(
               "shrink-0 text-muted-foreground/70 transition-transform duration-200",
               isSmall ? "h-3.5 w-3.5" : "h-4 w-4",
-              open && "rotate-180 text-foreground"
+              open && "rotate-180 text-foreground",
             )}
           />
         </button>
@@ -159,15 +158,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     opt.disabled
                       ? "cursor-not-allowed opacity-40 text-muted-foreground"
                       : "cursor-pointer hover:bg-muted/80 hover:text-foreground",
-                    isSelected
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-foreground"
+                    isSelected ? "bg-primary/10 text-primary font-medium" : "text-foreground",
                   )}
                 >
                   <span className="truncate">{opt.label}</span>
-                  {isSelected && (
-                    <Check className={cn("shrink-0 text-primary", isSmall ? "h-3.5 w-3.5" : "h-4 w-4")} />
-                  )}
+                  {isSelected && <Check className={cn("shrink-0 text-primary", isSmall ? "h-3.5 w-3.5" : "h-4 w-4")} />}
                 </div>
               );
             })}
@@ -188,18 +183,34 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         </select>
       </div>
     );
-  }
+  },
 );
 Select.displayName = "Select";
 
-export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string | null; children: (id: string) => ReactNode }) {
+export function Field({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string | null;
+  children: (id: string) => ReactNode;
+}) {
   const id = useId();
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="text-sm font-medium">{label}</label>
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
       {children(id)}
       {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="text-xs text-danger">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

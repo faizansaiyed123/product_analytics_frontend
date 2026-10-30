@@ -17,5 +17,16 @@ export function pickInterval(r: DateRange): "hour" | "day" | "week" {
   return "day";
 }
 
-export const COMMON_TIMEZONES = ["UTC", "America/Los_Angeles", "America/New_York", "America/Sao_Paulo", "Europe/London", "Europe/Berlin", "Asia/Kolkata", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney"];
+export const COMMON_TIMEZONES = [
+  "UTC",
+  "America/Los_Angeles",
+  "America/New_York",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Berlin",
+  "Asia/Kolkata",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+];
 export const localTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";

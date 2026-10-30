@@ -16,6 +16,8 @@ export function useProject(): { project: Project | null; projects: Project[]; is
   const { projectId, setProjectId } = useUI();
   const projects = data ?? [];
   const project = projects.find((p) => p.id === projectId) ?? projects[0] ?? null;
-  useEffect(() => { if (project && project.id !== projectId) setProjectId(project.id); }, [project, projectId, setProjectId]);
+  useEffect(() => {
+    if (project && project.id !== projectId) setProjectId(project.id);
+  }, [project, projectId, setProjectId]);
   return { project, projects, isLoading };
 }
