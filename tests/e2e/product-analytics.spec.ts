@@ -47,7 +47,7 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   await page.getByTestId("api-key-value").evaluate(node => { node.textContent = "phc_TEST_KEY_REDACTED"; });
   await saveShot(page, "03-api-key-redacted.png");
   await page.getByRole("button", { name: "Continue to workspace" }).click();
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole("heading", { name: "Understand what moves your product." })).toBeVisible({ timeout: 20000 });
 
   // Isolated test events use the actual ingestion API and production ingestion service, not MSW or fixtures.
   const now = Date.now();
@@ -235,7 +235,7 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   const goodLoginWait = page.waitForResponse(r => r.url().includes("/api/v1/auth/login") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Sign in" }).click();
   expect((await goodLoginWait).status()).toBe(200);
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole("heading", { name: "Understand what moves your product." })).toBeVisible({ timeout: 20000 });
 
   // Verify the account-security screen updates the actual password and keeps the current session alive.
   const changedPassword = "E2eChangedPassword2026!";
@@ -250,7 +250,7 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
 
   // The current session remains valid after the change; sign out before testing anonymous auth pages.
   await page.goto(base + "/");
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole("heading", { name: "Understand what moves your product." })).toBeVisible({ timeout: 20000 });
   await page.getByRole("button", { name: "Account menu" }).click();
   const changedSessionLogoutWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/logout") && r.request().method() === "POST");
   await page.getByRole("menuitem", { name: "Sign out" }).click();
@@ -298,7 +298,7 @@ test("browser journey writes through FastAPI into PostgreSQL", async ({ page }) 
   const changedLoginWait = page.waitForResponse(r => r.url().endsWith("/api/v1/auth/login") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Sign in" }).click();
   expect((await changedLoginWait).status()).toBe(200);
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole("heading", { name: "Understand what moves your product." })).toBeVisible({ timeout: 20000 });
 
   for (const prefix of ["POST /api/v1/auth/register", "POST /api/v1/projects", "POST /api/v1/events/batch", "POST /api/v1/analytics/overview", "POST /api/v1/analytics/query", "POST /api/v1/reports", "POST /api/v1/cohorts", "POST /api/v1/cohorts/preview", "POST /api/v1/dashboards", "PATCH /api/v1/dashboards/", "POST /api/v1/alerts", "POST /api/v1/alerts/", "PATCH /api/v1/projects/", "POST /api/v1/projects/", "DELETE /api/v1/projects/", "POST /api/v1/export/jobs", "GET /api/v1/export/events", "POST /api/v1/auth/change-password", "POST /api/v1/auth/password-reset/request", "POST /api/v1/auth/password-reset/confirm", "POST /api/v1/auth/verify-email/confirm", "POST /api/v1/auth/logout", "POST /api/v1/auth/login"]) {
     expect([...calls].some(call => call.startsWith(prefix)), prefix).toBeTruthy();
