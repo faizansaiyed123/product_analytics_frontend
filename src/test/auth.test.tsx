@@ -10,7 +10,7 @@ describe("authentication UI", () => {
   it("redirects anonymous visitors to the login page", async () => {
     signedOut();
     renderApp(<AppRoutes />, "/events");
-    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Sign in to workspace" })).toBeInTheDocument();
   });
 
   it("validates the login form before calling the API", async () => {
@@ -28,7 +28,7 @@ describe("authentication UI", () => {
     signedOut();
     server.use(http.post(API("/auth/login"), () => err(401, "INVALID_CREDENTIALS", "Invalid email or password")));
     renderApp(<AppRoutes />, "/login");
-    await userEvent.type(await screen.findByLabelText("Email"), "a@example.com");
+    await userEvent.type(await screen.findByLabelText("Email address"), "a@example.com");
     await userEvent.type(screen.getByLabelText("Password"), "wrong-password");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect email or password.");
@@ -42,7 +42,7 @@ describe("authentication UI", () => {
       http.post(API("/analytics/overview"), () => json({ kpis: { total_users: 0, active_users: 0, new_users: 0, total_events: 0, sessions: 0, events_per_user: 0, avg_session_duration_seconds: null }, previous_kpis: null, interval: "day", labels: [], event_volume: [], active_users_series: [], new_users_series: [], user_growth_series: [], top_events: [], top_pages: [], retention: { cohorts: [], average: [], offsets: [], interval: "day" } })),
     );
     renderApp(<AppRoutes />, "/login");
-    await userEvent.type(await screen.findByLabelText("Email"), " owner@example.com ");
+    await userEvent.type(await screen.findByLabelText("Email address"), " owner@example.com ");
     await userEvent.type(screen.getByLabelText("Password"), "Sup3rSecretPass");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
