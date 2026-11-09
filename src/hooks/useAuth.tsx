@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, type ReactNode } from "react";
-import { ApiError, onUnauthorized } from "@/services/api";
+import { onUnauthorized } from "@/services/api";
 import { authApi } from "@/services/endpoints";
 import type { Me } from "@/types";
 
@@ -44,13 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
   };
-  if (q.error && !(q.error instanceof ApiError && q.error.status === 401)) {
-    return (
-      <div role="alert" className="p-8 text-center text-sm">
-        Cannot reach the API. Is the backend running?
-      </div>
-    );
-  }
+
+  // A missing API must not prevent the frontend router and public auth pages
+  // from rendering. Protected routes still require a real authenticated user.
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
