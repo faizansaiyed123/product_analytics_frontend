@@ -1,0 +1,64 @@
+{
+  "rewrites": [
+    {
+      "source": "/login",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/register",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/verify-email",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/insights/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/events",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/users",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/users/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/sessions",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboards",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboards/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/reports",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/settings",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/settings/:path*",
+      "destination": "/index.html"
+    }
+  ]
+}
