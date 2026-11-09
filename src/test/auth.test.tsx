@@ -13,6 +13,19 @@ describe("authentication UI", () => {
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 
+
+  it("keeps the login UI available when the backend API is unavailable", async () => {
+    server.use(
+      http.get(API("/auth/me"), () =>
+        err(503, "SERVICE_UNAVAILABLE", "Backend unavailable"),
+      ),
+    );
+    renderApp(<AppRoutes />, "/");
+    expect(
+      await screen.findByRole("heading", { name: "Sign in to your workspace" }),
+    ).toBeInTheDocument();
+  });
+
   it("validates the login form before calling the API", async () => {
     signedOut();
     let called = false;
