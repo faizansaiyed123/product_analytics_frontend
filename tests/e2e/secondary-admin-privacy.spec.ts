@@ -49,7 +49,7 @@ test("event details, erasure, key rotation, alerts and team invites", async ({ p
   const initialKey = (await page.getByTestId("api-key-value").innerText()).trim();
   expect(initialKey).toMatch(/^phc_/);
   await page.getByRole("button", { name: "Continue to workspace" }).click();
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole("heading", { name: "Understand what moves your product." })).toBeVisible({ timeout: 20000 });
 
   // Ingest real events so detail and person pages consume actual persisted records.
   const now = Date.now();
