@@ -78,7 +78,7 @@ const events = Array.from({ length: 72 }, (_, i) => {
       source: ["organic", "product", "email", "paid"][i % 4],
       value: event === "Ran Report" ? 120 + i * 7 : undefined,
     },
-    path: event === "$pageview" ? ["/", "/pricing", "/docs", "/app"][i % 4] : `/app/${event.toLowerCase().replace(/\\s+/g, "-")}`,
+    path: event === "$pageview" ? ["/", "/pricing", "/docs", "/app"][i % 4] : `/app/${event.toLowerCase().replace(/\s+/g, "-")}`,
     hostname: "app.acme.example",
     country: person.country,
     ip: i % 3 === 0 ? null : "203.0.113.10",
@@ -408,6 +408,8 @@ export async function demoRequest<T = unknown>(path: string, opts: DemoOpts = {}
     ] as T;
     if (parts[1] === "property-values") return [{ value: "enterprise", count: 18 }, { value: "pro", count: 42 }, { value: "growth", count: 64 }] as T;
   }
+
+  if (root === "cohorts" && parts[1] === "preview" && method === "POST") return { count: 27 } as T;
 
   if (["cohorts", "reports", "dashboards", "alerts"].includes(root)) {
     const collection = state[root as "cohorts" | "reports" | "dashboards" | "alerts"];
