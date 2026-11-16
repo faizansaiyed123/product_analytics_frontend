@@ -160,7 +160,7 @@ const exportJobs: any[] = [
   { id: "export-demo-0001", project_id: project.id, kind: "events", format: "csv", status: "done", row_count: 72, error: null, created_at: iso(now.getTime() - DAY), finished_at: iso(now.getTime() - 23 * 3_600_000) },
 ];
 
-const state = { loggedIn: true, password: "demo1234!", people, events, members, invitations, apiKeys, reports, dashboards, cohorts, alerts, notifications, auditLogs, exportJobs };
+const state = { loggedIn: true, password: "demo1234!", projects: [project], people, events, members, invitations, apiKeys, reports, dashboards, cohorts, alerts, notifications, auditLogs, exportJobs };
 
 const envelope = (result: any, queryType: string) => ({ query_type: queryType, result, cached: false, computed_at: now.toISOString(), duration_ms: 18 });
 
@@ -337,8 +337,9 @@ export async function demoRequest<T = unknown>(path: string, opts: DemoOpts = {}
   if (root === "projects") {
     const pid = parts[1];
     if (!pid) {
-      if (method === "GET") return [project] as T;
+      if (method === "GET") return state.projects as T;
       const created = { ...project, id: `project-${Date.now()}`, name: body.name ?? "New Project" };
+      state.projects.push(created);
       return { ...created, api_key: { ...apiKeys[0], id: `key-${Date.now()}`, name: "Default", key: "phc_demo_new", key_prefix: "phc_demo_new" } } as T;
     }
     if (parts[2] === "api-keys") {
@@ -362,11 +363,12 @@ export async function demoRequest<T = unknown>(path: string, opts: DemoOpts = {}
     if (parts[2] === "usage") return usage() as T;
     if (parts[2] === "data" && parts[3] === "purge") return { ok: true } as T;
     if (parts[2] === "persons" && method === "DELETE") { state.people = state.people.filter((p: any) => p.id !== parts[3]); state.events = state.events.filter((e: any) => e.person_id !== parts[3]); return { ok: true } as T; }
-    if (method === "GET") return project as T;
+    if (method === "GET") return (state.projects.find((p: any) => p.id === pid) ?? project) as T;
     if (method === "PATCH") {
-      if (body.name) project.name = body.name;
-      if (body.settings) project.settings = { ...project.settings, ...body.settings };
-      return project as T;
+      const target = state.projects.find((p: any) => p.id === pid) ?? project;
+      if (body.name) target.name = body.name;
+      if (body.settings) target.settings = { ...target.settings, ...body.settings };
+      return target as T;
     }
     if (method === "DELETE") return { ok: true } as T;
   }
@@ -461,7 +463,7 @@ function toCsv(rows: any[]): string {
 }
 
 export function demoDownload(path: string, params: Record<string, unknown>): string {
-  const data = path.includes("/events") ? state.events.slice(0, 50) : path.includes("/users") ? state.people : reports;
+  const data = path.includes("/events") ? state.events.slice(0, 50) : path.includes("/users") || path.includes("/export/jobs") ? state.people : reports;
   const isJson = params.format === "json" || path.includes("/reports");
   const payload = isJson ? JSON.stringify(data, null, 2) : toCsv(data);
   const mime = isJson ? "application/json" : "text/csv";
