@@ -1,3 +1,7 @@
+import { demoDownload, demoDownloadPost, demoRequest } from "@/demo/runtime";
+
+export const DEMO_MODE = true;
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -43,6 +47,7 @@ export async function api<T = unknown>(
   path: string,
   opts: { method?: string; body?: unknown; params?: Record<string, unknown>; signal?: AbortSignal } = {},
 ): Promise<T> {
+  if (DEMO_MODE) return demoRequest<T>(path, opts);
   const method = opts.method ?? "GET";
   const url = new URL(`/api/v1${path}`, window.location.origin);
   for (const [k, v] of Object.entries(opts.params ?? {})) {
@@ -90,6 +95,7 @@ export async function api<T = unknown>(
 }
 
 export function downloadUrl(path: string, params: Record<string, unknown>): string {
+  if (DEMO_MODE) return demoDownload(path, params);
   const url = new URL(`/api/v1${path}`, window.location.origin);
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null || v === "") continue;
@@ -100,6 +106,7 @@ export function downloadUrl(path: string, params: Record<string, unknown>): stri
 }
 
 export async function downloadPost(path: string, body: unknown, filename: string): Promise<void> {
+  if (DEMO_MODE) return demoDownloadPost(path, body, filename);
   const res = await fetch(`/api/v1${path}`, {
     method: "POST",
     credentials: "include",
